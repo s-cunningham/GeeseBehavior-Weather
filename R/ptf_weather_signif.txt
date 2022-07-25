@@ -1,0 +1,24 @@
+
+    model {
+    
+    # Priors and Constraints
+    beta0 ~ dnorm(0, 0.01)
+    beta1 ~ dnorm(0, 0.01)
+    beta2 ~ dnorm(0, 0.01)
+    beta3 ~ dnorm(0, 0.01)
+    beta4 ~ dnorm(0, 0.01)
+    beta5 ~ dnorm(0, 0.01)
+    sigma_id ~ dunif(0, 100)
+    tau_id <- 1 / (sigma_id ^ 2)
+
+    # for (k in 1:nind) {
+    #   eps_id[k] ~ dnorm(0, tau_id)  
+    # }
+
+    # Likelihood (loop over all observations)
+    for (i in 1:nind) {  
+      ad[i] ~ dbern(p[i])
+      logit(p[i]) <- beta0 + beta1*sPRATE[i] + beta2*sMTEMP[i] + beta3*pop[i] + beta4*sPRATE[i]*pop[i] + beta5*sMTEMP[i]*pop[i]
+    }
+
+}

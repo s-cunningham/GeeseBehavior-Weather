@@ -1,0 +1,44 @@
+
+    model {
+    
+   for (i in 1:nind) {
+	  beta0[i] ~ dnorm(0, 0.01)
+	  mu1[i] ~ dnorm(0, 0.01)
+	  mu2[i] ~ dnorm(0, 0.01)
+	  tau.p1[i] ~ dgamma(0.001, 0.001)
+	  sd.q1[i] <- 1/sqrt(tau.p1[i])
+	  tau.p2[i] ~ dgamma(0.001, 0.001)
+	  sd.q2[i] <- 1/sqrt(tau.p2[i])
+  	}
+	
+	for (i in 1:nind) {
+		tau.o[i] ~ dgamma(0.001, 0.001)
+		sd.r[i] <- 1/sqrt(tau.o[i])
+  	  
+		# Initialize
+		beta1[i,1] <- mu1[i]
+		beta2[i,1] <- mu2[i]
+
+		predY[i,1] <- beta0[i] + beta1[i,1]*prcp[i,1] + beta2[i,1]*temp[i,1] 
+		Y[i,1] ~ dnorm(predY[i,1], tau.o[i])
+	}
+  	
+  	# Likelihood
+  	for (i in 1:nind) {
+  	  for (j in 2:dur[i]) {
+   		
+  	  	predX1[i,j] <- beta1[i,j-1]
+  	  	beta1[i,j] ~ dnorm(predX1[i,j], tau.p1[i])	# Process variation (coefficients for precipitation)
+  		
+  	  	predX2[i,j] <- beta2[i,j-1]
+  		  beta2[i,j] ~ dnorm(predX2[i,j], tau.p2[i])	# Process variation (coefficiencts for temperature)
+
+  		# predX3[i,j] <- beta3[i,j-1]
+  		# beta3[i,j] ~ dnorm(predX3[i,j], tau.p3[i])	# Process variation (coefficients for prcp*temp)
+  		
+  	  	predY[i,j] <- beta0[i] + beta1[i,j]*prcp[i,j] + beta2[i,j]*temp[i,j] #+ beta3[i,j]*prcp[i,j]*temp[i,j]
+  		  Y[i,j] ~ dnorm(predY[i,j], tau.o[i])	# Observation variation
+  	  }
+  	}
+    
+}

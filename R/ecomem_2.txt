@@ -1,0 +1,55 @@
+
+    model {
+    
+    ## Priors for regression parameters
+    # Random year effect
+    for (i in 1:yrs) {
+        beta0[i] ~ dnorm(0, tau.alpha)  
+    }
+    mu ~ dnorm(0, 0.01)
+    tau.alpha <- 1/(sd.alpha*sd.alpha)
+    sd.alpha ~ dunif(0,100) 
+    
+    # Slope parameters
+    beta1 ~ dnorm(0, 0.01)
+    beta2 ~ dnorm(0, 0.01)
+    beta3 ~ dnorm(0, 0.01)
+    
+    ### 
+    # Dirichlet prior for daily ODBA weights
+    for(j in 1:mig.len){
+      delta[j] ~ dgamma(1,1)
+    }
+
+    for (j in 1:mig.len) {
+      weight[j] <- delta[j]/sumD
+        for (i in 1:nind) {
+        
+        # For each time period into the past, compute weighted ODBA variable
+        antX1[j,i] <- weight[j]*ptf[i,mig.len-j+1]
+        }
+    
+      # Reorder weights from recent to older
+      weightOrdered[mig.len-j+1] <- weight[j]
+    }
+    
+    # Compute sum of deltas (unnormalized weights)
+    sumD <- sum(delta)
+    
+    # Compute cumulative daily weights
+    for (j in 1:mig.len) {
+      cum.weight[j] <- sum(weightOrdered[1:j])
+    }
+
+    # Compute antecedent ODBA by summing weighted ODBA variable over past days
+    for (i in 1:nind) {
+      antPTF[i] <- sum(antX1[,i])
+    }
+
+    ## Likelihood
+    for (i in 1:nind) {
+      ad[i] ~ dbern(p[i])
+      logit(p[i]) <- beta0[year[i]] + beta1*antPTF[i] + beta2*pop[i] + beta3*antPTF[i]*pop[i]
+    }
+
+}

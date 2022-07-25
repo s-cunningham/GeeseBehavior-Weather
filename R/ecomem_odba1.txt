@@ -1,0 +1,50 @@
+
+    model {
+    
+    ## Priors
+    # Regression parameters
+    beta0 ~ dnorm(0, 0.01)
+    beta1 ~ dnorm(0, 0.01)
+    beta2 ~ dnorm(0, 0.01)
+
+    # Residual (observation) standard deviation and precision
+    sig ~ dunif(0,100)
+    tau <- pow(sig, -2)
+    
+    # Dirichlet prior for daily ODBA weights
+    for(j in 1:un.dur){
+      delta[j] ~ dgamma(1,1)
+      
+    }
+
+    for (j in 1:un.dur) {
+      weight[j] <- delta[j]/sumD
+        for (i in 1:nind) {
+        # For each time period into the past, compute weighted ODBA variable
+        antX1[j,i] <- weight[j]*odba[i,un.dur-j+1]
+        }
+      # Reorder weights from recent to older
+      weightOrdered[un.dur-j+1] <- weight[j]
+    }
+    
+    # Compute sum of deltas (unnormalized weights)
+    sumD <- sum(delta)
+    
+    # Compute cumulative daily weights
+    for (j in 1:un.dur) {
+      cum.weight[j] <- sum(weightOrdered[1:j])
+    }
+
+    # Compute antecedent ODBA by summing weighted ODBA variable over past days
+    for (i in 1:nind) {
+      antODBA[i] <- sum(antX1[,i])
+    }
+
+    ## Likelihood
+    for (i in 1:nind) {
+      ad[i] ~ dbern(p[i])
+      logit(p[i]) <- beta0 + beta1*antODBA[i] + beta2*year[i]
+    }
+    
+
+}

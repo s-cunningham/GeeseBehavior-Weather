@@ -1,0 +1,46 @@
+
+    model {
+
+    # Priors
+    beta0 ~ dnorm(0, 0.01) # Intercept
+
+    mu1 ~ dnorm(0, 0.01) # beta1[1]
+    mu2 ~ dnorm(0, 0.01) # beta2[1]
+    
+    eta.p1 ~ dgamma(0.001, 0.001) # Process variance for covariate 1
+    sd.q1 <- 1/sqrt(eta.p1)
+    
+    eta.p2 ~ dgamma(0.001, 0.001) # Process variance for covariate 1
+    sd.q2 <- 1/sqrt(eta.p2)
+
+    phi ~ dgamma(0.1, 0.1) # parameter for beta regression
+    
+    sigma ~ dunif(0,100)
+    tau <- 1/(sigma*sigma)
+    
+    # Initialize (fill in first value)
+    beta1[1] <- mu1
+    beta2[1] <- mu2
+    
+    y[1] ~ dnorm(mu[1], tau)
+    mu[1] <- beta0 + beta1[1]*prate[1] + beta2[1]*temp[1]
+
+    
+    # Likelihood
+    for (j in 2:dur) {
+      
+      # Process model 
+      predX1[j] <- 1*beta1[j-1]
+      beta1[j] ~ dnorm(predX1[j], eta.p1)	# coefficients for precipitation rate
+      
+      predX2[j] <- 1*beta2[j-1]
+      beta2[j] ~ dnorm(predX2[j], eta.p2)	# coefficiencts for temperature
+      
+      # Observation model
+      y[j] ~ dnorm(mu[j], tau)
+      mu[j] <- beta0 + beta1[j]*prate[j] + beta2[j]*temp[j]
+    
+    }
+
+    
+}
