@@ -14,6 +14,8 @@ library(jagsUI)
 library(tidyverse)
 library(zoo)
 
+set.seed(123)
+
 # Read in data
 dat <-read.csv("output/dlm_emm_data3.csv", stringsAsFactors=FALSE)
 dat <- dat[,-1]
@@ -158,7 +160,7 @@ dat <- left_join(dat, m.odbag, by="animal_id")
 
 dat <- mutate(dat, dif.og=prop.odba-mog)
 
-ggplot(dat, aes(y=prop.odba, x=factor(attempt), fill=pop)) + geom_boxplot() +
+ggplot(dat, aes(y=mean.odba, x=factor(attempt), fill=pop)) + geom_boxplot() +
   scale_fill_manual(values=c("#2166ac", "#b2182b")) +
   theme_classic() + theme(panel.border=element_rect(color="black", fill=NA, size=0.5),
                           legend.position="bottom",

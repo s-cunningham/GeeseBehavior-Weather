@@ -23,7 +23,7 @@ setwd("data/CSV_1ppd")
 file.list <- list.files(path="./", pattern=".csv", all.files=TRUE, full.names=FALSE)
 file.list <- lapply(file.list, FUN=read.csv, header=TRUE, stringsAsFactors=FALSE)
 dat <- do.call("rbind", file.list)
-setwd("G:/ResearchProjects/Behavior_and_weather")
+setwd("G:/ResearchProjects/GeeseBehavior-Weather")
 
 dat <- dat[,-1]
 dat <- dat[dat$key!="502_2018" & dat$key!="523_2018" & dat$key!="527_2018" & dat$key!="530_2018" & 
@@ -109,7 +109,10 @@ for (i in 1:length(un.id)) {
 dat$julian <- as.numeric(format(dat$date, "%j"))
 
 ggplot(dat, aes(x=julian, y=animal_id, shape=missing, color=missing)) + geom_point()
-write.csv(dat, "output/interp-gps-data_full.csv")
+# write.csv(dat, "output/interp-gps-data_full.csv")
+
+# Plot 
+
 
 # Checking dates of end of "arrival" period
 # mjd <- a <- numeric()

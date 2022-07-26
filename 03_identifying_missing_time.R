@@ -15,7 +15,7 @@ setwd("data/CSV_1ppd")
 file.list <- list.files(path="./", pattern=".csv", all.files=TRUE, full.names=FALSE)
 file.list <- lapply(file.list, FUN=read.csv, header=TRUE, stringsAsFactors=FALSE)
 files <- do.call("rbind", file.list)
-setwd("G:/ResearchProjects/Behavior_and_weather")
+setwd("G:/ResearchProjects/GeeseBehavior-Weather")
 
 files <- files[,-1]
 files <- files[files$key!="502_2018" & files$key!="523_2018" & files$key!="527_2018" & files$key!="530_2018" & 
