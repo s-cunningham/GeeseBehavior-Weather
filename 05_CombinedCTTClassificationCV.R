@@ -21,76 +21,48 @@ library(matrixStats)
 # Source the function file
 source("R/00_ACCfunctions.R") 
 
+set.seed(123)
+
 # Read in training data
 ctt.wide <- read.csv("data/new_ctt_continentscombined-wildgrazeonly.csv", stringsAsFactors=FALSE) # CTT data
 ctt.wide <- ctt.wide[,-c(1)]
 ctt.wide$Behavior[ctt.wide$Behavior=="walk"] <- "graze"
 names(ctt.wide)[3:89] <- c(rep("X",29), rep("Y",29), rep("Z",29))
 
-# Randomly select a subset of flight and stationary behaviors (not sure if necessary for CTT)
-set.seed(123)
-ctt.b <- ctt.wide[,1:2]
-x.f <- subset(ctt.wide, Behavior=="fly")
-sam.f <- sample(1:nrow(x.f),size=150, replace=FALSE)
-x.f <- x.f[sam.f,]
-x.s <- subset(ctt.wide, Behavior=="stationary")
-sam.s <- sample(1:nrow(x.s),size=150, replace=FALSE)
-x.s <- x.s[sam.s,]
-ctt.wide <- subset(ctt.wide, Behavior!="fly" & Behavior!="stationary")
-ctt.wide <- rbind(ctt.wide, x.s, x.f)
-ctt.wide %>% group_by(Behavior) %>% dplyr::count()
-
+# Remove a random subset of walk/graze
+samples <- sample(row.names(ctt.wide[ctt.wide$Behavior=="graze",]), size=139)
+ctt.wide <- ctt.wide[!(rownames(ctt.wide) %in% samples),]
+ctt.wide[,1:2] %>% group_by(Behavior) %>% dplyr::count()
 
 # Calculate summary statistics and scale
 ctt.ss <- accSumStatsCTT(ctt.wide)
-# ctt.ss <- scale(ctt.ss[,2:39])  # need this?
-# ctt.ss <- cbind.data.frame(behavior=ctt.wide$behavior, ctt.ss)
-
-# ctt.ss$behavior[ctt.ss$behavior=="walk"] <- "feed"
-
-
-# How many of each behavior
-ctt.ss %>% group_by(behavior) %>% count()
-
-ctt.ss <- droplevels(ctt.ss)
-
-# Set seed
-set.seed(512)
-# set.seed(100)
-
-# Split dataset into train and test sets (80/20 split)
-samples <- sample(1:nrow(ctt.ss),size=0.8*nrow(ctt.ss))
-ctt.train <- ctt.ss[samples,2:39]
-ctt.test <- ctt.ss[-samples,2:39]
-train.behaviors <- ctt.ss$behavior[samples]
-test.behaviors <- ctt.ss$behavior[-samples]
+ctt.ss <- ctt.ss[,-c(2:4, 19, 21, 24, 25)]
 
 # Random Forest 
-
 K=10
 folds <- sample(1:K, nrow(ctt.ss), replace=TRUE)
 rf.error <- matrix(0, nrow=1, ncol=K)
-rf.prec <- matrix(0, nrow=4, ncol=K)
-rf.rec <- matrix(0, nrow=4, ncol=K)
-rf.accu <- matrix(0, nrow=4, ncol=K)
+rf.prec <- matrix(0, nrow=3, ncol=K)
+rf.rec <- matrix(0, nrow=3, ncol=K)
+rf.accu <- matrix(0, nrow=3, ncol=K)
 
 for (i in 1:K) {
-  ctt.train <- ctt.ss[folds != i,2:39]
+  ctt.train <- ctt.ss[folds != i,2:38]
   behavior <- ctt.ss[folds != i, 1]
   ot <- cbind(behavior, ctt.train)
-  ctt.test <- ctt.ss[folds == i,2:39]
+  ctt.test <- ctt.ss[folds == i,2:38]
   test.behaviors <- ctt.ss[folds==i,1]
   
   no.beh <- ncol(ctt.train)
-  ctt.rf <- randomForest(behavior~., data=ot, mtry=sqrt(no.beh), ntree=2000)
+  ctt.rf <- randomForest(factor(behavior)~., data=ot, mtry=sqrt(no.beh), ntree=2000)
   ctt.pred <- predict(ctt.rf, newdata=ctt.test)
   rf.error[1,i] <- mean(ctt.pred==test.behaviors) 
   
   t3 <- table(ctt.pred, test.behaviors)
   cv.m3 <- data.frame(modelPerformance(t3)[2])
-  rf.prec[,i] <- as.matrix(cv.m3[2,2:5])
-  rf.rec[,i] <- as.matrix(cv.m3[1,2:5])
-  rf.accu[,i] <- as.matrix(cv.m3[3,2:5])
+  rf.prec[,i] <- as.matrix(cv.m3[2,2:4])
+  rf.rec[,i] <- as.matrix(cv.m3[1,2:4])
+  rf.accu[,i] <- as.matrix(cv.m3[3,2:4])
 }
 
 rms3 <- rowMeans(rf.error)
@@ -106,13 +78,13 @@ accu.rf <- rowMeans(rf.accu)
 KCV=10
 # folds <- sample(1:KCV, nrow(ctt.ss), replace=TRUE)
 knn.error <- matrix(0, nrow=1, ncol=KCV)
-knn.prec <- matrix(0, nrow=4, ncol=KCV)
-knn.rec <- matrix(0, nrow=4, ncol=KCV)
+knn.prec <- matrix(0, nrow=3, ncol=KCV)
+knn.rec <- matrix(0, nrow=3, ncol=KCV)
 
 for (i in 1:KCV) {
-  ctt.train <- ctt.ss[folds != i,2:39]
+  ctt.train <- ctt.ss[folds != i,2:38]
   train.behaviors <- ctt.ss[folds != i, 1]
-  ctt.test <- ctt.ss[folds == i,2:39]
+  ctt.test <- ctt.ss[folds == i,2:38]
   test.behaviors <- ctt.ss[folds==i,1]
   
   k=100
@@ -136,8 +108,8 @@ for (i in 1:KCV) {
   
   t1 <- table(ctt.knn3,test.behaviors)
   cv.m1 <- data.frame(modelPerformance(t1)[2])
-  knn.prec[,i] <- as.matrix(cv.m1[2,2:5])
-  knn.rec[,i] <- as.matrix(cv.m1[1,2:5])
+  knn.prec[,i] <- as.matrix(cv.m1[2,2:4])
+  knn.rec[,i] <- as.matrix(cv.m1[1,2:4])
   
 }
 
@@ -153,17 +125,17 @@ rec.knn <- rowMeans(knn.rec)
 K=10
 # folds <- sample(1:K, nrow(ctt.ss), replace=TRUE)
 cart.error <- matrix(0, nrow=1, ncol=K)
-cart.prec <- matrix(0, nrow=4, ncol=K)
-cart.rec <- matrix(0, nrow=4, ncol=K)
+cart.prec <- matrix(0, nrow=3, ncol=K)
+cart.rec <- matrix(0, nrow=3, ncol=K)
 
 for (i in 1:K) {
-  ctt.train <- ctt.ss[folds != i,2:39]
+  ctt.train <- ctt.ss[folds != i,2:38]
   behavior <- ctt.ss[folds != i, 1]
   ctt.train <- cbind(behavior, ctt.train)
-  ctt.test <- ctt.ss[folds == i,2:39]
+  ctt.test <- ctt.ss[folds == i,2:38]
   test.behaviors <- ctt.ss[folds==i,1]
   
-  tree.ctt <- tree(behavior~., data=ctt.train)
+  tree.ctt <- tree(factor(behavior)~., data=ctt.train)
   ctt.tree.p <- predict(tree.ctt, newdata=ctt.test, type="class")
   
   # Cross validation to determine optimal number of terminal nodes, and then "prune" the tree
@@ -177,8 +149,8 @@ for (i in 1:K) {
   
   t2 <- table(ctt.prune.p, test.behaviors)
   cv.m2 <- data.frame(modelPerformance(t2)[2])
-  cart.prec[,i] <- as.matrix(cv.m2[2,2:5])
-  cart.rec[,i] <- as.matrix(cv.m2[1,2:5])
+  cart.prec[,i] <- as.matrix(cv.m2[2,2:4])
+  cart.rec[,i] <- as.matrix(cv.m2[1,2:4])
 }
 
 rms2 <- rowMeans(cart.error)
@@ -192,14 +164,14 @@ rec.cart <- rowMeans(cart.rec)
 
 # folds <- sample(1:K, nrow(ctt.ss), replace=TRUE)
 lda.error <- matrix(0, nrow=1, ncol=K)
-lda.prec <- matrix(0, nrow=4, ncol=K)
-lda.rec <- matrix(0, nrow=4, ncol=K)
+lda.prec <- matrix(0, nrow=3, ncol=K)
+lda.rec <- matrix(0, nrow=3, ncol=K)
 
 for (i in 1:K) {
-  ctt.train <- ctt.ss[folds != i,2:39]
+  ctt.train <- ctt.ss[folds != i,2:38]
   behavior <- ctt.ss[folds != i, 1]
   ctt.train <- cbind(behavior, ctt.train)
-  ctt.test <- ctt.ss[folds == i,2:39]
+  ctt.test <- ctt.ss[folds == i,2:38]
   test.behaviors <- ctt.ss[folds==i,1]
   
   ctt.lda <- lda(behavior~., data=ctt.train)
@@ -208,8 +180,8 @@ for (i in 1:K) {
   
   t4 <- table(ctt.lda.p$class, test.behaviors)
   cv.m4 <- data.frame(modelPerformance(t4)[2])
-  lda.prec[,i] <- as.matrix(cv.m4[2,2:5])
-  lda.rec[,i] <- as.matrix(cv.m4[1,2:5])
+  lda.prec[,i] <- as.matrix(cv.m4[2,2:4])
+  lda.rec[,i] <- as.matrix(cv.m4[1,2:4])
 }
 
 rms4 <- rowMeans(lda.error)
@@ -223,25 +195,25 @@ rec.lda <- rowMeans(lda.rec)
 
 # folds <- sample(1:K, nrow(ctt.ss), replace=TRUE)
 svm.error <- matrix(0, nrow=1, ncol=K)
-svm.prec <- matrix(0, nrow=4, ncol=K)
-svm.rec <- matrix(0, nrow=4, ncol=K)
+svm.prec <- matrix(0, nrow=3, ncol=K)
+svm.rec <- matrix(0, nrow=3, ncol=K)
 
 for (i in 1:K) {
-  ctt.train <- ctt.ss[folds != i,2:39]
+  ctt.train <- ctt.ss[folds != i,2:38]
   train.behaviors <- ctt.ss[folds != i, 1]
   ot <- cbind(train.behaviors, ctt.train)
-  ctt.test <- ctt.ss[folds == i,2:39]
+  ctt.test <- ctt.ss[folds == i,2:38]
   test.behaviors <- ctt.ss[folds==i,1]
   
-  ctt.svm <- svm(train.behaviors~., data=ot, kernel="radial")
+  ctt.svm <- svm(factor(train.behaviors)~., data=ot, kernel="radial")
   
   svm.p <- predict(ctt.svm, newdata=ctt.test)
   svm.error[1,i] <- mean(svm.p==test.behaviors)
   
   t5 <- table(svm.p, test.behaviors)
   cv.m5 <- data.frame(modelPerformance(t5)[2])
-  svm.prec[,i] <- as.matrix(cv.m5[2,2:5])
-  svm.rec[,i] <- as.matrix(cv.m5[1,2:5])
+  svm.prec[,i] <- as.matrix(cv.m5[2,2:4])
+  svm.rec[,i] <- as.matrix(cv.m5[1,2:4])
 }
 
 rms5 <- rowMeans(svm.error)
@@ -267,9 +239,9 @@ Method <- c(rep("KNN",2), rep("CART",2), rep("RF",2), rep("LDA",2), rep("SVM",2)
 all <- cbind(Method, all)
 Measure <- rep(c("Precision","Recall"), 5)
 all <- cbind(Measure, all)
-names(all)[3:6] <- c("graze", "walk", "stationary", "fly")
+names(all)[3:5] <- c("graze", "stationary", "fly")
 
-apr <- all %>% gather(key="Behavior", value="Value", 3:6) %>%
+apr <- all %>% gather(key="Behavior", value="Value", 3:5) %>%
   spread(Measure, Value)
 
 ggplot(apr, aes(x=Recall, y=Precision, shape=Method, colour=Behavior)) + geom_point(size=5) + 
@@ -296,7 +268,75 @@ error$CV <- as.factor(c("CV1","CV2","CV3","CV4","CV5","CV6","CV7","CV8","CV9","C
 error2 <- gather(error, key="Method", value="CVmean", 1:5)
 error2$CVmean <- error2$CVmean*100
 
-ggplot(error2, aes(x=Method, y=CVmean, fill=Method)) + geom_boxplot() + theme_bw(base_size=16) + scale_fill_discrete(guide=FALSE) + theme(axis.text=element_text(size=14))
+ggplot(error2, aes(x=Method, y=CVmean, fill=Method)) + geom_boxplot() + theme_bw(base_size=16) + scale_fill_discrete(guide='none') + theme(axis.text=element_text(size=14))
+
+
+######################################################
+
+# Classifying CTT devices
+
+## Reclassify data with new training set 
+
+# Run the RF model
+samples <- sample(1:nrow(ctt.ss),size=0.7*nrow(ctt.ss))
+train <- ctt.ss[samples,]
+test <- ctt.ss[-samples,-1]
+ctt.rf <- randomForest(factor(behavior)~., data=train, mtry=sqrt(no.beh), ntree=2000)
+
+# Predict on the test set
+ctt.pred <- predict(ctt.rf, newdata=test)
+
+# Confustion matrix
+test.behaviors <- ctt.ss$behavior[-samples]
+rfcm <- table(ctt.pred, test.behaviors)
+rfcm
+
+# Precision and accuracy for each behavior
+modelPerformance(rfcm)
+
+# Overall accuracy 
+mean(ctt.pred==test.behaviors) 
+
+# Read in summary statistics
+file.name <- list.files(path="data/ed.sumstatsCTT/", pattern=".csv", all.files=TRUE, full.names=TRUE)
+file.list <- lapply(file.name, FUN=read.csv, header=TRUE, stringsAsFactors=FALSE)
+
+# Read in wide-format data
+wide <- list.files(path="data/wideCTT/", pattern=".csv", all.files=TRUE, full.names=TRUE)
+wide <- lapply(wide, FUN=read.csv, header=TRUE, stringsAsFactors=FALSE)
+
+# Classify each bird
+for (i in 2:length(file.list)) {
+  wide.ss <- file.list[[i]]
+  
+  ossb1 <- data.frame(burst=wide.ss$burst)
+  o1 <- wide[[i]]
+  o1 <- o1[,2:3]
+  o1 <- semi_join(o1, ossb1, by="burst")
+  
+  wide.ss <- wide.ss[,-c(1:5,20,22,25,26)]
+  
+  # Classify the data using Random Forest
+  rf.labels <- predict(ctt.rf, newdata=wide.ss)
+  
+  odba <- wide.ss$odba
+  
+  id1 <- strsplit(file.name[[i]], "[/_]")
+  id <- id1[[1]][3]
+  
+  print(id)
+  print(table(rf.labels))
+  
+  o1$timestamp <- as.POSIXct(o1$timestamp, tz="GMT")
+  date <- format(o1$timestamp, "%Y-%m-%d")
+  
+  dat <- data.frame(id=id, date=date, o1, odba=odba, behavior=rf.labels)
+  
+  filename = paste0("output/classified/", id, "_class-odba.csv")
+  write.csv(dat, filename)
+  
+}
+
 
 
 
