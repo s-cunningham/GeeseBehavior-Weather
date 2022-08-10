@@ -13,6 +13,7 @@ dat$timestamp <- as.POSIXct(dat$timestamp, tz="UTC")
 
 un.id <- unique(dat$animal_id)
 
+# loop over each individual 
 new <- data.frame()
 for (j in 1:length(un.id)) {
   temp1 <- subset(dat, animal_id==un.id[j])
