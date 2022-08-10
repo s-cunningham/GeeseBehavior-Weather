@@ -4,8 +4,6 @@
 library(tidyverse)
 library(lubridate)
 
-rm(list=ls())
-
 # Read in all GPS data (1 point per day)
 dat <- read.csv("output/dlm_emm_data.csv", stringsAsFactors=FALSE)
 dat <- dat[,-1]
