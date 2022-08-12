@@ -12,8 +12,6 @@
 library(move)
 library(tidyverse)
 
-# rm(list=ls())
-
 # Read data (subset, does not include summer breeding season)
 # dat <- read.csv("output/combined_gps_acc_subset.csv", stringsAsFactors=FALSE)
 # dat <- dat[,-1]
