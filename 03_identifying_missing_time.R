@@ -11,11 +11,9 @@
 
 library(tidyverse)
 
-setwd("data/CSV_1ppd")
-file.list <- list.files(path="./", pattern=".csv", all.files=TRUE, full.names=FALSE)
+file.list <- list.files(path="data/CSV_1ppd/", pattern=".csv", all.files=TRUE, full.names=TRUE)
 file.list <- lapply(file.list, FUN=read.csv, header=TRUE, stringsAsFactors=FALSE)
 files <- do.call("rbind", file.list)
-setwd("G:/ResearchProjects/GeeseBehavior-Weather")
 
 files <- files[,-1]
 files <- files[files$key!="502_2018" & files$key!="523_2018" & files$key!="527_2018" & files$key!="530_2018" & 
@@ -80,6 +78,6 @@ names(dat.dw)[c(4,5,12)] <- c("year","julian", "sex")
 
 dat.dw <- dat.dw[!is.na(dat.dw$key),]
 
-ggplot(dat.dw, aes(x=rel.day, y=id_ind, color=missing)) + geom_point()
+ggplot(dat.dw, aes(x=rel.day, y=animal_id, color=missing)) + geom_point()
 
 write.csv(dat.dw, "output/combined_gps_acc_subset.csv")
