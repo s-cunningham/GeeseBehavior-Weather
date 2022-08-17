@@ -168,6 +168,8 @@ for (i in 1:length(file.list)) {
   newdate <- unlist(newdate)
   temp$date <- newdate
   
+  temp$date <- as.Date(temp$date, format="%d-%m-%Y")
+  
   filename = paste0("output/odba_map/", temp$id[1], "_classed-odba-map.csv")
   write_csv(temp, filename)
   
