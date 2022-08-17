@@ -3,6 +3,7 @@
 ## Author: S. Cunningham
 
 library(tidyverse)
+library(move)
 
 #### ACC data ####
 
@@ -35,8 +36,7 @@ for (i in 1:length(ctt.files)) {
   tag <- rep("CTT", nrow(nbursts))
   animal_id <- rep(temp$id[1], nrow(nbursts))
   id <- data.frame(animal_id=animal_id, tag=tag)
-  id$pop <- ifelse(id$animal_id=="X9Z", "GRLD", "NAMC")
-  
+
   # bind individual identification to daily summarized values
   nbursts <- bind_cols(id, nbursts)
   
@@ -76,13 +76,7 @@ for (i in 1:length(orn.files)) {
   tag <- rep("ORN", nrow(nbursts))
   animal_id <- rep(temp$id[1], nrow(nbursts))
   id <- data.frame(animal_id=animal_id, tag=tag)
-  id$pop <- ifelse(id$animal_id==17701 |
-                     id$animal_id==17709 |
-                     id$animal_id==17719 |
-                     id$animal_id==17744 |
-                     id$animal_id==17828 |
-                     id$animal_id==17829, "NAMC", "GRLD")
-  
+
   # bind individual identification to daily summarized values
   nbursts <- bind_cols(id, nbursts)
   
@@ -133,8 +127,7 @@ for (i in 1:length(eobs.files)) {
   tag <- rep("EOBS", nrow(nbursts))
   animal_id <- rep(temp$id[1], nrow(nbursts))
   id <- data.frame(animal_id=animal_id, tag=tag)
-  id$pop <- "GRLD"
-  
+
   # bind individual identification to daily summarized values
   nbursts <- bind_cols(id, nbursts)
   
@@ -148,10 +141,83 @@ eobs$animal_id <- as.character(eobs$animal_id)
 
 ## Combine
 acc <- rbind(ctt, orn, eobs)
+acc$date <- as.Date(acc$date)
 
 #### GPS data ####
 gps.files <- list.files(path="data/CSV_1ppd/", pattern=".csv", all.files=TRUE, full.names=TRUE)
 gps <- lapply(gps.files, FUN=read.csv, header=TRUE, stringsAsFactors=FALSE)
 
+# Loop over each individual and interpolate missing data
+for (i in 1:length(gps)) {
+  
+  # Subset to each individual
+  temp <- gps[[i]]
+  temp <- temp[,-1]
+  temp$date <- as.Date(temp$date)
+  temp <- temp[,c(1:2,4,6:8,13,14)]
+  
+  dr <- range(temp$date)
+  dse <- seq(as.Date(dr[1]),as.Date(dr[2]), "1 day")
+  dats <- data.frame(date=dse)
+  temp <- left_join(dats, temp, by="date")
+  temp[is.na(temp$key),c(2,3,7,8)] <- temp[1,c(2,3,7,8)]
+  
+  temp[is.na(temp$latitude),4] <- paste0(temp$date[is.na(temp$latitude)], " 16:00:05")
 
+  # Determine how many locations are missing
+  temp$missing <- ifelse(is.na(temp$latitude),"y","n")
+  nmiss <- sum(is.na(temp$latitude))
+
+  # Add populaiton 
+  temp$pop <- "GRLD"
+  temp$pop[str_detect(temp$animal_id, "[A-Z]")] <- "NAMC"
+  
+  # Interpolate location for missing day
+  if (nmiss > 0) {
+    temp2 <- temp[temp$missing=="n",]
+    
+    date_range <- seq(min(temp2$date), max(temp2$date), by=1)
+    dates <- data.frame(date=date_range[!date_range %in% temp2$date], time=NA)
+    
+    dates$time <- ifelse(temp2$pop[1]=="GRLD", "16:00:00", "21:00:00")
+    dates <- unite(dates, "timestamp", 1:2, sep=" ", remove=FALSE)
+    miss <- as.POSIXct(dates$timestamp, tz="UTC")
+    
+    # Create move object
+    tmove <- move(temp2$longitude, temp2$latitude, time=as.POSIXct(temp2$timestamp, tz="UTC"), 
+                  data=temp2, proj=CRS("+proj=longlat +ellps=WGS84"), animal=temp2$animal_id[1])
+    
+    interp <- interpolateTime(tmove, time=miss, spaceMethod='greatcircle')
+
+    temp[is.na(temp$latitude),"latitude"] <- interp@coords[,2]
+    temp[is.na(temp$longitude),"longitude"] <- interp@coords[,1]
+    temp[is.na(temp$date),"date"] <- dates$date
+    temp[is.na(temp$timestamp),"timestamp"] <- as.POSIXct(dates$timestamp, tz="UTC")
+  }
+
+  gps[[i]] <- temp
+}
+
+gps <- do.call(rbind, gps)
+
+# Save date as Julian day
+gps$julian <- as.numeric(format(gps$date, "%j"))
+
+# Plot for visual representation of missing points
+ggplot(gps, aes(x=julian, y=animal_id, shape=missing, color=missing)) + geom_point() + theme_bw()
+
+#### Join GPS and ACC data ####
+dat <- left_join(gps, acc, by=c("animal_id", "date"))
+
+# See where tag and population is missing
+unique(dat$animal_id[is.na(dat$tag)])
+dat$pop[dat$animal_id=="LM17M" | dat$animal_id=="LM31F" | dat$animal_id=="RP01F" |
+          dat$animal_id=="RP08F" | dat$animal_id=="RP15F"] <- "NAMC"
+dat$tag[dat$animal_id=="LM17M" | dat$animal_id=="LM31F" | dat$animal_id=="RP01F" |
+          dat$animal_id=="RP08F" | dat$animal_id=="RP15F"] <- "CTT"
+dat$pop[dat$animal_id=="17763"] <- "GRLD"
+dat$tag[dat$animal_id=="17763"] <- "ORN"
+
+# delete unneeded columns, reorganize
+dat <- dat[,c(3,2,1,11,5:10,12:19)]
 
