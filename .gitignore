@@ -1,6 +1,7 @@
 # folders
 data/
 output/
+doc/
 
 # History files
 .Rhistory
