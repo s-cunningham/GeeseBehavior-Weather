@@ -4,6 +4,7 @@
 
 library(tidyverse)
 
+#### ACC data ####
 
 ## CTT ##
 ## Read files
@@ -34,7 +35,6 @@ for (i in 1:length(ctt.files)) {
   tag <- rep("CTT", nrow(nbursts))
   animal_id <- rep(temp$id[1], nrow(nbursts))
   id <- data.frame(animal_id=animal_id, tag=tag)
-  id$sex <- ifelse(id$animal_id=="LM17M", "M", "F")
   id$pop <- ifelse(id$animal_id=="X9Z", "GRLD", "NAMC")
   
   # bind individual identification to daily summarized values
@@ -76,7 +76,6 @@ for (i in 1:length(orn.files)) {
   tag <- rep("ORN", nrow(nbursts))
   animal_id <- rep(temp$id[1], nrow(nbursts))
   id <- data.frame(animal_id=animal_id, tag=tag)
-  id$sex <- "F"
   id$pop <- ifelse(id$animal_id==17701 |
                      id$animal_id==17709 |
                      id$animal_id==17719 |
@@ -95,13 +94,13 @@ for (i in 1:length(orn.files)) {
 orn <- do.call(rbind, orn)
 
 # Rename Jay's birds
-# orn$animal_id <- as.character(orn$animal_id)
-# orn$animal_id[orn$animal_id=="17701"] <- "RP20F"
-# orn$animal_id[orn$animal_id=="17709"] <- "RP19F"
-# orn$animal_id[orn$animal_id=="17719"] <- "RP17F"
-# orn$animal_id[orn$animal_id=="17744"] <- "LM39F"
-# orn$animal_id[orn$animal_id=="17828"] <- "RP23F"
-# orn$animal_id[orn$animal_id=="17829"] <- "RP22F"
+orn$animal_id <- as.character(orn$animal_id)
+orn$animal_id[orn$animal_id=="17701"] <- "RP20F"
+orn$animal_id[orn$animal_id=="17709"] <- "RP19F"
+orn$animal_id[orn$animal_id=="17719"] <- "RP17F"
+orn$animal_id[orn$animal_id=="17744"] <- "LM39F"
+orn$animal_id[orn$animal_id=="17828"] <- "RP23F"
+orn$animal_id[orn$animal_id=="17829"] <- "RP22F"
 
 ## e-obs ##
 ## Read files
@@ -134,7 +133,6 @@ for (i in 1:length(eobs.files)) {
   tag <- rep("EOBS", nrow(nbursts))
   animal_id <- rep(temp$id[1], nrow(nbursts))
   id <- data.frame(animal_id=animal_id, tag=tag)
-  id$sex <- "M"
   id$pop <- "GRLD"
   
   # bind individual identification to daily summarized values
@@ -149,4 +147,11 @@ eobs <- do.call(rbind, eobs)
 eobs$animal_id <- as.character(eobs$animal_id)
 
 ## Combine
+acc <- rbind(ctt, orn, eobs)
+
+#### GPS data ####
+gps.files <- list.files(path="data/CSV_1ppd/", pattern=".csv", all.files=TRUE, full.names=TRUE)
+gps <- lapply(gps.files, FUN=read.csv, header=TRUE, stringsAsFactors=FALSE)
+
+
 
