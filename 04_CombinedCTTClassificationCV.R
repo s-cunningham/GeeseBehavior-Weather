@@ -306,7 +306,7 @@ wide <- list.files(path="data/wideCTT/", pattern=".csv", all.files=TRUE, full.na
 wide <- lapply(wide, FUN=read.csv, header=TRUE, stringsAsFactors=FALSE)
 
 # Classify each bird
-for (i in 2:length(file.list)) {
+for (i in 1:length(file.list)) {
   wide.ss <- file.list[[i]]
   
   ossb1 <- data.frame(burst=wide.ss$burst)
