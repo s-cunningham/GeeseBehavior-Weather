@@ -185,12 +185,24 @@ sdLat$lnOBDA <- log(sdLat$median.odba)
 un.id <- unique(sdLat$animal_id)
 for (i in 1:length(un.id)) {
   temp <- sdLat[sdLat$animal_id==un.id[i],]
-  ggplot(sdLat, aes(x=lnSDdist, y=lnOBDA, color=animal_id)) + geom_point() +
-    coord_cartesian(xlim=c(-1, 15)) + theme_bw()
+  p <- ggplot(temp, aes(x=lnSDdist, y=lnOBDA, col=julian)) + geom_point(size=3) +
+           ggtitle(un.id[i]) +
+    coord_cartesian(xlim=c(-1, 15), ylim=c(-4.5, 0)) + theme_bw()
+  print(p)
 }
 
 ggplot(sdLat, aes(x=lnSDdist, y=lnOBDA, color=animal_id)) + geom_point() +
   coord_cartesian(xlim=c(-1, 15)) + theme_bw()
+
+
+#### e-obs geese ####
+
+acc$year <- as.numeric(format(as.Date(acc$date), "%Y"))
+
+# what happens if compare OBDA to distance from previous day's location?
+eobs <- acc[acc$year==2012 | acc$year==2013,]
+
+
 
 
 
