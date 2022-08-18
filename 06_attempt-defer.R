@@ -148,11 +148,49 @@ sdLat <- gps %>% group_by(animal_id, date) %>% summarize(dld=sd(latdiff))
 un.id <- unique(sdLat$animal_id)
 for (i in 1:length(un.id)) {
   temp <- sdLat[sdLat$animal_id==un.id[i],]
-  plot(as.Date(temp$date), temp$dld, type="l", main=un.id[i], ylim=c(0, 200))
+  plot(as.Date(temp$date), temp$dld, type="l", pch=16, main=un.id[i], ylim=c(0, 2500))
   abline(h=25.4, col="red")
-  abline(h=89.4, col="red", lty=3)
+  # abline(h=89.4, col="red", lty=3)
 }
 
+## Examine daily median ODBA ##
+
+# Read in summarized ACC data
+acc <- read.csv("files_for_models/daily_odba_behavior.csv")
+
+# get rid of extra columns
+acc <- acc[,c(1:4, 18)]
+
+# subset to May-July
+acc <- acc[acc$julian>=121 & acc$julian<=212,]
+
+# Plot median ODBA
+un.id <- unique(acc$animal_id)
+for (i in 1:length(un.id)) {
+  temp <- acc[acc$animal_id==un.id[i],]
+  plot(as.Date(temp$date), temp$median.odba, type="l", pch=16, main=un.id[i], ylim=c(0, 1))
+  # abline(h=25.4, col="red")
+}
+
+# Join ACC and latitude SD
+sdLat <- left_join(sdLat, acc, by=c("animal_id", "date"))
+sdLat <- sdLat[,c(1,4,2,5,3,6)]
+names(sdLat)[5] <- "sdDIST"
+
+# Log-transform ODBA and SD of latitude
+sdLat$lnSDdist <- log(sdLat$sdDIST)
+sdLat$lnOBDA <- log(sdLat$median.odba)
+
+# Replicate Fig. 4 from Shreven et al. 2021
+un.id <- unique(sdLat$animal_id)
+for (i in 1:length(un.id)) {
+  temp <- sdLat[sdLat$animal_id==un.id[i],]
+  ggplot(sdLat, aes(x=lnSDdist, y=lnOBDA, color=animal_id)) + geom_point() +
+    coord_cartesian(xlim=c(-1, 15)) + theme_bw()
+}
+
+ggplot(sdLat, aes(x=lnSDdist, y=lnOBDA, color=animal_id)) + geom_point() +
+  coord_cartesian(xlim=c(-1, 15)) + theme_bw()
 
 
 
