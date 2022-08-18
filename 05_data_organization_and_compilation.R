@@ -221,3 +221,14 @@ dat$tag[dat$animal_id=="17763"] <- "ORN"
 # delete unneeded columns, reorganize
 dat <- dat[,c(3,2,1,11,5:10,12:19)]
 
+# create a column to see how many bursts/day there are
+dat$burstsuccess <- ifelse(dat$nbursts>=180,"y","n")
+ggplot(dat, aes(x=julian, y=animal_id, shape=burstsuccess, color=nbursts)) + geom_point() + theme_bw()
+ggplot(dat, aes(x=julian, y=nbursts, color=animal_id)) + geom_line() + theme_bw()
+
+dat$burstsuccess[is.na(dat$burstsuccess)] <- "n"
+
+# Remove 17768 and LM31F because not enough points per day
+dat <- dat[dat$animal_id!="17768" & dat$animal_id!="LM31F",]
+
+
