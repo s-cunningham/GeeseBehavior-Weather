@@ -4,6 +4,7 @@
 
 library(tidyverse)
 library(sp)
+library(adehabitatLT)
 
 #### Point-specific GPS locations ####
 
@@ -197,12 +198,64 @@ ggplot(sdLat, aes(x=lnSDdist, y=lnOBDA, color=animal_id)) + geom_point() +
 
 #### e-obs geese ####
 
-acc$year <- as.numeric(format(as.Date(acc$date), "%Y"))
+acc <- read.csv("files_for_models/daily_odba_behavior.csv")
 
 # what happens if compare OBDA to distance from previous day's location?
-eobs <- acc[acc$year==2012 | acc$year==2013,]
+acc <- acc[acc$year==2012 | acc$year==2013,]
+acc <- acc[,c(1:6,18)]
 
+un.id <- unique(acc$animal_id)
+eobs <- data.frame()
 
+for (i in 1:length(un.id)) {
+  
+  temp <- acc[acc$animal_id==un.id[i],]
+  
+  xy <- temp[,c(6,5)]
+  spdf <- SpatialPointsDataFrame(coords=xy, data=temp, proj4string=CRS("+proj=longlat +datum=WGS84"))
+  spdf <- spTransform(spdf, CRS("+proj=aeqd +lat_0=90 +lon_0=0"))
+  
+  spdf$date <- as.POSIXct(spdf$date)
+  
+  # Create ltraj object
+  rawtraj <- as.ltraj(coordinates(spdf), date=spdf$date, id=spdf$animal_id, burst=spdf$key, typeII=TRUE)
+  
+  # Check if locations are regularly spaced
+  is.regular(rawtraj)
+  
+  # Regularize trajectories, round values
+  refda <- min(spdf$date)
+  tag <- setNA(rawtraj, refda,1,units="day")
+  ttraj <- sett0(tag, refda,1,units="day")
+  ttraj <- mindistkeep(ttraj, 5)
+  
+  tag <- ld(ttraj)
+  tag$date <- as.character(tag$date)
+  
+  tag <- tag[,c(3,1,2,4:6)]
+  names(tag)[2:3] <- c("x_coord", "y_coord")
+  
+  tag$date <- gsub(" 00:00:00", "", tag$date)
+  
+  temp <- left_join(temp, tag, by="date")
+  temp <- temp[temp$julian>=121 & temp$julian<=212,]
+  
+  eobs <- rbind(eobs, temp)
+  
+}
 
+# Are there missing locations
+eobs[is.na(eobs$dy),]
 
+# Log-transform ODBA and difference in latitude
+eobs$lnDISTy <- log(abs(eobs$dy))
+eobs$lnOBDA <- log(eobs$median.odba)
 
+un.id <- unique(eobs$animal_id)
+for (i in 1:length(un.id)) {
+  temp <- eobs[eobs$animal_id==un.id[i],]
+  p <- ggplot(temp, aes(x=lnSDdist, y=lnOBDA, col=julian)) + geom_point(size=3) +
+    ggtitle(un.id[i]) +
+    coord_cartesian(xlim=c(-1, 15), ylim=c(-4.5, 0)) + theme_bw()
+  print(p)
+}
