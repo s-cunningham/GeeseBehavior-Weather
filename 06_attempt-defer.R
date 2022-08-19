@@ -236,9 +236,13 @@ for (i in 1:length(un.id)) {
   names(tag)[2:3] <- c("x_coord", "y_coord")
   
   tag$date <- gsub(" 00:00:00", "", tag$date)
+  tag$julian <- as.numeric(format(as.Date(tag$date), "%j"))
   
-  temp <- left_join(temp, tag, by="date")
+  temp <- left_join(temp, tag, by="julian")
   temp <- temp[temp$julian>=121 & temp$julian<=212,]
+  
+  temp <- temp[,c(1:7,9:13)]
+  names(temp)[3] <- "date"
   
   eobs <- rbind(eobs, temp)
   
@@ -246,16 +250,21 @@ for (i in 1:length(un.id)) {
 
 # Are there missing locations
 eobs[is.na(eobs$dy),]
+eobs <- eobs[!is.na(eobs$dy),]
 
 # Log-transform ODBA and difference in latitude
+eobs$lnDIST <- log(abs(eobs$dist))
 eobs$lnDISTy <- log(abs(eobs$dy))
 eobs$lnOBDA <- log(eobs$median.odba)
 
 un.id <- unique(eobs$animal_id)
 for (i in 1:length(un.id)) {
   temp <- eobs[eobs$animal_id==un.id[i],]
-  p <- ggplot(temp, aes(x=lnSDdist, y=lnOBDA, col=julian)) + geom_point(size=3) +
+  p <- ggplot(temp, aes(x=lnDIST, y=lnOBDA, col=julian)) + geom_point(size=3) +
     ggtitle(un.id[i]) +
-    coord_cartesian(xlim=c(-1, 15), ylim=c(-4.5, 0)) + theme_bw()
+    coord_cartesian(xlim=c(-5, 15), ylim=c(-5, 0)) + theme_bw()
   print(p)
 }
+
+
+
