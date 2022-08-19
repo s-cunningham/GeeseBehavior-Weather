@@ -260,11 +260,24 @@ eobs$lnOBDA <- log(eobs$median.odba)
 un.id <- unique(eobs$animal_id)
 for (i in 1:length(un.id)) {
   temp <- eobs[eobs$animal_id==un.id[i],]
-  p <- ggplot(temp, aes(x=lnDIST, y=lnOBDA, col=julian)) + geom_point(size=3) +
+  p <- ggplot(temp, aes(x=lnDISTy, y=lnOBDA, col=julian)) + geom_point(size=3) +
     ggtitle(un.id[i]) +
     coord_cartesian(xlim=c(-5, 15), ylim=c(-5, 0)) + theme_bw()
   print(p)
 }
+
+ggplot(eobs, aes(x=lnDISTy, y=lnOBDA, col=animal_id)) + geom_point(size=3) +
+  coord_cartesian(xlim=c(0, 15)) + theme_bw()
+
+ggplot(eobs, aes(x=julian, y=median.odba, col=animal_id)) + geom_line() + theme_bw()
+ggplot(eobs, aes(x=julian, y=abs(dy), col=animal_id)) + geom_line() + 
+  coord_cartesian(ylim=c(0, 2000)) + theme_bw() 
+
+ggplot(eobs, aes(x=x_coord, y=y_coord, col=animal_id)) + geom_line() + 
+  coord_cartesian(ylim=c(-1750000, -1000000), xlim=c(-2100000, -1500000)) + theme_bw() 
+
+## Assign defer/attempt for 
+acc <- read.csv("files_for_models/daily_odba_behavior.csv")
 
 
 
