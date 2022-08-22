@@ -276,8 +276,14 @@ ggplot(eobs, aes(x=julian, y=abs(dy), col=animal_id)) + geom_line() +
 ggplot(eobs, aes(x=x_coord, y=y_coord, col=animal_id)) + geom_line() + 
   coord_cartesian(ylim=c(-1750000, -1000000), xlim=c(-2100000, -1500000)) + theme_bw() 
 
-## Assign defer/attempt for 
+## Assign defer/attempt for birds with collars
 acc <- read.csv("files_for_models/daily_odba_behavior.csv")
 
+# Add new column
+acc$defer <- 0
+acc$defer[acc$tag=="EOBS"] <- NA
+acc$defer[acc$animal_id=="17766" | acc$animal_id=="17769" | acc$animal_id=="17814" |
+            acc$animal_id=="RP23F" | acc$animal_id=="LM39F" | acc$animal_id=="RP19F" |
+            acc$animal_id=="RP20F"] <- 1
 
 
