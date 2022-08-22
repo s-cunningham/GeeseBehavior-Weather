@@ -4,16 +4,23 @@ library(tidyverse)
 library(raster)
 library(lubridate)
 
-rm(list=ls())
-
 options(scipen=999)
 
 # Read in all GPS data (1 point per day)
-dat <- read.csv("output/dlm_emm_data.csv", stringsAsFactors=FALSE)
-dat <- dat[,-1]
+dat <- read_csv("files_for_models/daily_odba_behavior.csv")
 
+# Create timestamp column
+dat$time <- "16:00:00"
+dat$time[dat$pop=="NAMC"] <- "21:00:00"
+dat <- unite(dat, "timestamp", c(3,19), sep=" ", remove=FALSE)
+dat <- dat[,-20]
+
+# Convert date and timestamp format
 dat$date <- as.Date(dat$date)
 dat$timestamp <- as.POSIXct(dat$timestamp, tz="UTC")
+
+# Convert to data.frame
+dat <- as.data.frame(dat)
 
 un.id <- unique(dat$animal_id)
 
@@ -47,69 +54,34 @@ for (j in 1:length(un.id)) {
   }
 }  
 
-airt1 <- list()
+# Set up lists to store weather data
+airt <- list()
 maxt <- list()
 mint <- list()
-press <- list()
-omega <- list()
-weqsd <- list()
-prcp1 <- list()
-clcov <- list()
-uwind1 <- list()
-vwind1 <- list()
-uwind2 <- list()
-vwind2 <- list()
+
 for (i in 1:length(un.id)) {
+  
+  # Subset to individual
   temp <- subset(new, animal_id==un.id[i])
-  prcp.dat <- NCEP.interp(variable='prate.sfc', level='gaussian', lat=temp$latitude, lon=temp$longitude,
-                        dt=temp$timestamp, reanalysis2=TRUE, interpolate.space=TRUE, interp='linear',
-                        return.units=TRUE, status.bar=TRUE)
+ 
+  # Download temp data
   airt.dat <- NCEP.interp(variable='air.2m', level='gaussian', lat=temp$latitude, lon=temp$longitude,
                   dt=temp$timestamp, reanalysis2=TRUE, interpolate.space=TRUE, interp='linear', return.units=TRUE)
   maxt.dat <- NCEP.interp(variable='tmax.2m', level='gaussian', lat=temp$latitude, lon=temp$longitude,
                   dt=temp$timestamp, reanalysis2=TRUE, interpolate.space=TRUE, interp='linear', return.units=TRUE)
   mint.dat <- NCEP.interp(variable='tmin.2m', level='gaussian', lat=temp$latitude, lon=temp$longitude,
                   dt=temp$timestamp, reanalysis2=TRUE, interpolate.space=TRUE, interp='linear', return.units=TRUE)
-  press.dat <- NCEP.interp(variable='pres.sfc', level='surface', lat=temp$latitude, lon=temp$longitude,
-                  dt=temp$timestamp, reanalysis2=TRUE, interpolate.space=TRUE, interp='linear', return.units=TRUE)
-  omega.dat <- NCEP.interp(variable='omega.sig995', level='surface', lat=temp$latitude, lon=temp$longitude,
-                  dt=temp$timestamp, reanalysis2=FALSE, interpolate.space=TRUE, interp='linear', return.units=TRUE)
-  weqsd.dat <- NCEP.interp(variable='weasd.sfc', level='gaussian', lat=temp$latitude, lon=temp$longitude,
-                  dt=temp$timestamp, reanalysis2=TRUE, interpolate.space=TRUE, interp='linear', return.units=TRUE)
-  clcov.dat <- NCEP.interp(variable='tcdc.eatm', level='gaussian', lat=temp$latitude, lon=temp$longitude,
-                  dt=temp$timestamp, reanalysis2=TRUE, interpolate.space=TRUE, interp='linear', return.units=TRUE)
-  uwind500.dat <- NCEP.interp(variable='uwnd', level=500, lat=temp$latitude, lon=temp$longitude, 
-			dt=temp$timestamp, reanalysis2=TRUE, interp='linear', return.units=TRUE)
-  vwind500.dat <- NCEP.interp(variable='vwnd', level=500, lat=temp$latitude, lon=temp$longitude, 
-			dt=temp$timestamp, reanalysis2=TRUE, interp='linear', return.units=TRUE)
-  uwind850.dat <- NCEP.interp(variable='uwnd', level=850, lat=temp$latitude, lon=temp$longitude, 
-			dt=temp$timestamp, reanalysis2=TRUE, interp='linear', return.units=TRUE)
-  vwind850.dat <- NCEP.interp(variable='vwnd', level=850, lat=temp$latitude, lon=temp$longitude, 
-			dt=temp$timestamp, reanalysis2=TRUE, interp='linear', return.units=TRUE)
-  airt1[[i]] <- airt.dat
-  prcp1[[i]] <- prcp.dat
+  
+  # Save data
+  airt[[i]] <- airt.dat
   maxt[[i]] <- maxt.dat
   mint[[i]] <- mint.dat
-  press[[i]] <- press.dat
-  omega[[i]] <- omega.dat
-  weqsd[[i]] <- weqsd.dat
-  clcov[[i]] <- clcov.dat
-  uwind1[[i]] <- uwind500.dat
-  vwind1[[i]] <- vwind500.dat
-  uwind2[[i]] <- uwind850.dat
-  vwind2[[i]] <- vwind850.dat
+
 }
-save(file="C:/Users/sacdc5/Desktop/WeatherData/prate_all.Rdata", list="prcp1")
-save(file="C:/Users/sacdc5/Desktop/WeatherData/meantemp_all.Rdata", list="airt1")
-save(file="C:/Users/sacdc5/Desktop/WeatherData/maxtemp_all.Rdata", list="maxt")
-save(file="C:/Users/sacdc5/Desktop/WeatherData/mintemp_all.Rdata", list="mint")
-save(file="C:/Users/sacdc5/Desktop/WeatherData/press.sfc_all.Rdata", list="press")
-save(file="C:/Users/sacdc5/Desktop/WeatherData/omega.sig995_all.Rdata", list="omega")
-save(file="C:/Users/sacdc5/Desktop/WeatherData/weasd.sfc_all.Rdata", list="weqsd")
-save(file="C:/Users/sacdc5/Desktop/WeatherData/tcdc.eatm_all.Rdata", list="clcov")
-save(file="C:/Users/sacdc5/Desktop/WeatherData/uwind500_all.Rdata", list="uwind1")
-save(file="C:/Users/sacdc5/Desktop/WeatherData/vwind500_all.Rdata", list="vwind1")
-save(file="C:/Users/sacdc5/Desktop/WeatherData/uwind850_all.Rdata", list="uwind2")
-save(file="C:/Users/sacdc5/Desktop/WeatherData/vwind850_all.Rdata", list="vwind2")
+
+
+save(file="output/meantemp_all.Rdata", list="airt1")
+save(file="output/maxtemp_all.Rdata", list="maxt")
+save(file="output/mintemp_all.Rdata", list="mint")
 
 
