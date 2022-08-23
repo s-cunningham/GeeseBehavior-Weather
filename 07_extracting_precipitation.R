@@ -6,19 +6,9 @@ library(tidyverse)
 files <- list.files(path="data/gridded_precip/", pattern=".nc", all.files=TRUE, full.names=TRUE)
 
 ## Read in goose data
-dat <- read.csv("output/dlm_emm_data4.csv")
-dat <- dat[,-1]
-names(dat)[1] <- "animal_id"
+dat <- read_csv("files_for_models/daily_odba_behavior.csv")
 
-## Read in GPS data
-gps <- read.csv("output/interp-gps-data_full.csv")
-gps <- gps[,c(4,2,6,7)]
-
-## Join GPS points to data
-dat <- left_join(dat, gps, by=c("animal_id", "date"))
-dat <- dat[!is.na(dat$latitude),]
-
-# change longitude
+# change longitude so that it matches rasters (all positive instead of E/W)
 dat$longitude <- ifelse(dat$longitude<0, dat$longitude+360, dat$longitude)
 
 # set up data
@@ -39,7 +29,7 @@ for (i in 1:length(files)) {
   
   if (nrow(temp)>0) {
     # convert to spdf
-    xy <- temp[,c(22,21)]
+    xy <- temp[,c(6,5)]
     spdf <- SpatialPointsDataFrame(coords=xy, data=temp, proj4string=CRS("+proj=longlat +datum=WGS84"))
     
     # Extract from raster
@@ -53,12 +43,8 @@ for (i in 1:length(files)) {
  print(i)
 }
 
-prcp <- prcp[,c(1,3,23)]
+prcp <- prcp[,c(1,3,19)]
 
-dat <- left_join(dat, prcp, by=c("animal_id", "date"))
-
-dat <- dat[!is.na(dat$prcp),]
-
-write_csv(dat, "output/dlm_emm_data5.csv")
+write_csv(dat, "files_for_models/daily_precip.csv")
 
 
