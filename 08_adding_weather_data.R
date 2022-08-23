@@ -8,10 +8,6 @@ library(lubridate)
 dat <- read.csv("output/dlm_emm_data.csv", stringsAsFactors=FALSE)
 dat <- dat[,-1]
 
-dat$time <- "16:00:00"
-dat$time[dat$pop=="NAMC"] <- "21:00:00"
-dat <- unite(dat, "timestamp", c(3,19), sep=" ", remove=FALSE)
-dat <- dat[,-20]
 
 dat$date <- as.Date(dat$date)
 dat$timestamp <- as.POSIXct(dat$timestamp, tz="UTC")
