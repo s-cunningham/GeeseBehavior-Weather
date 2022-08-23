@@ -80,7 +80,7 @@ for (i in 1:length(un.id)) {
 }
 
 
-save(file="output/meantemp_all.Rdata", list="airt1")
+save(file="output/meantemp_all.Rdata", list="airt")
 save(file="output/maxtemp_all.Rdata", list="maxt")
 save(file="output/mintemp_all.Rdata", list="mint")
 
