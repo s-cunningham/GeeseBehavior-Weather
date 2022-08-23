@@ -55,11 +55,16 @@ for (j in 1:length(un.id)) {
 }  
 
 # Set up lists to store weather data
-airt <- list()
-maxt <- list()
-mint <- list()
+# airt <- list()
+# maxt <- list()
+# mint <- list()
 
-for (i in 1:length(un.id)) {
+# Load partial lists
+load(file="output/meantemp_all.Rdata")
+load(file="output/maxtemp_all.Rdata")
+load(file="output/mintemp_all.Rdata")
+
+for (i in 18:length(un.id)) {
   
   # Subset to individual
   temp <- subset(new, animal_id==un.id[i])
@@ -79,7 +84,7 @@ for (i in 1:length(un.id)) {
 
 }
 
-
+# Write to file
 save(file="output/meantemp_all.Rdata", list="airt")
 save(file="output/maxtemp_all.Rdata", list="maxt")
 save(file="output/mintemp_all.Rdata", list="mint")
