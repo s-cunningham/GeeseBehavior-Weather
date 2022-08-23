@@ -160,7 +160,7 @@ for (i in 1:length(un.id)) {
 acc <- read.csv("files_for_models/daily_odba_behavior.csv")
 
 # get rid of extra columns
-acc <- acc[,c(1:4, 18)]
+acc <- acc[,c(1:4,18)]
 
 # subset to May-July
 acc <- acc[acc$julian>=121 & acc$julian<=212,]
@@ -174,7 +174,7 @@ for (i in 1:length(un.id)) {
 }
 
 # Join ACC and latitude SD
-sdLat <- left_join(sdLat, acc, by=c("animal_id", "date"))
+sdLat <- left_join(acc, sdLat, by=c("animal_id", "date"))
 sdLat <- sdLat[,c(1,4,2,5,3,6)]
 names(sdLat)[5] <- "sdDIST"
 
@@ -194,6 +194,8 @@ for (i in 1:length(un.id)) {
 
 ggplot(sdLat, aes(x=lnSDdist, y=lnOBDA, color=animal_id)) + geom_point() +
   coord_cartesian(xlim=c(-1, 15)) + theme_bw()
+
+
 
 
 #### e-obs geese ####
