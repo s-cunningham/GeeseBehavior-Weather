@@ -45,6 +45,6 @@ for (i in 1:length(files)) {
 
 prcp <- prcp[,c(1,3,19)]
 
-write_csv(dat, "files_for_models/daily_precip.csv")
+write_csv(prcp, "files_for_models/daily_precip.csv")
 
 
