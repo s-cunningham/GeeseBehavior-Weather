@@ -25,7 +25,7 @@ dat <- as.data.frame(dat)
 mdates <- read_csv("files_for_models/migration_dates.csv")
 
 # save maximum duration of migration period
-dur <- max(mdates$duration)
+dur <- max(mdates$duration) + 1
 
 # subset to migration dates
 dat$migration <- NA
@@ -51,7 +51,7 @@ dat[,c(19:22)] <- scale(dat[,c(19:22)])
 dat$lnODBAmedian <- log(dat$median.odba)
 
 # Save number of individuals
-nind <- length(unique(dat$id_ind))
+nind <- length(unique(dat$animal_id))
 
 # Set up data matrices
 prcp <- matrix(NA, nrow=nind, ncol=dur)
@@ -67,67 +67,101 @@ for (i in 1:length(un.id)) {
   prcp[i,1:r] <- dat[dat$animal_id==un.id[i],19]
   mintemp[i,1:r] <- dat[dat$animal_id==un.id[i],21]
   Y[i,1:r] <- dat[dat$animal_id==un.id[i],23] # ODBA
-  beta1[i,1:r] <- rnorm(dur[i])
-  beta2[i,1:r] <- rnorm(dur[i])
-  beta3[i,1:r] <- rnorm(dur[i])
+  beta1[i,1:r] <- rnorm(r)
+  beta2[i,1:r] <- rnorm(r)
+  beta3[i,1:r] <- rnorm(r)
 }
 
-### Run model with intercept not time-varying
-sink("R/dlm_odba.txt")
+# Run each model individually
+sink("R/dlm_odba_ind.txt")
 cat("
     model {
     
-    for (i in 1:nind) {
-      beta0[i] ~ dnorm(0, 0.01)
-      mu1[i] ~ dnorm(0, 0.01)
-      mu2[i] ~ dnorm(0, 0.01)
-      mu3[i] ~ dnorm(0, 0.01)
-      tau.p1[i] ~ dgamma(0.001, 0.001)
-      sd.q1[i] <- 1/sqrt(tau.p1[i])
-      tau.p2[i] ~ dgamma(0.001, 0.001)
-      sd.q2[i] <- 1/sqrt(tau.p2[i])
-    }
+    # Priors
+    beta0 ~ dnorm(0, 0.01)        # Intercept
+
+    mu1 ~ dnorm(0, 0.01)          # beta1[1]
+    mu2 ~ dnorm(0, 0.01)          # beta2[1]
     
-    for (i in 1:nind) {
-      tau.o[i] ~ dgamma(0.001, 0.001)
-      sd.r[i] <- 1/sqrt(tau.o[i])
-      
-      # Initialize
-      beta1[i,1] <- mu1[i]
-      beta2[i,1] <- mu2[i]
-      beta3[i,1] <- mu3[i]
-      
-      predY[i,1] <- beta0[i] + beta1[i,1]*prcp[i,1] + beta2[i,1]*temp[i,1] 
-      Y[i,1] ~ dnorm(predY[i,1], tau.o[i])
-    }
+    eta.p1 ~ dgamma(0.001, 0.001) # Process variance for covariate 1
+    sd.q1 <- 1/sqrt(eta.p1)
     
+    eta.p2 ~ dgamma(0.001, 0.001) # Process variance for covariate 1
+    sd.q2 <- 1/sqrt(eta.p2)
+
+    tau.o ~ dgamma(0.001, 0.001)
+    sd.r <- 1/sqrt(tau.o)
+    
+    # Initialize (fill in first value)
+    beta1[1] <- mu1
+    beta2[1] <- mu2
+    
+    predY[1] <- beta0 + beta1[1]*prcp[1] + beta2[1]*temp[1] 
+    y[1] ~ dnorm(predY[1], tau.o)
+
     # Likelihood
-    for (i in 1:nind) {
-      for (j in 2:dur[i]) {
-        
-        predX1[i,j] <- 1*beta1[i,j-1]
-        beta1[i,j] ~ dnorm(predX1[i,j], tau.p1[i])	# Process variation (coefficients for precipitation)
-        
-        predX2[i,j] <- 1*beta2[i,j-1]
-        beta2[i,j] ~ dnorm(predX2[i,j], tau.p2[i])	# Process variation (coefficiencts for temperature)
-        
-        predY[i,j] <- beta0[i] + beta1[i,j]*prate[i,j] + beta2[i,j]*temp[i,j] 
-        Y[i,j] ~ dnorm(predY[i,j], tau.o[i])	# Observation variation
-      }
+    for (i in 2:dur) {
+      
+      # Process model 
+      predX1[i] <- 1*beta1[i-1]
+      beta1[i] ~ dnorm(predX1[i], eta.p1)	# coefficients for precipitation rate
+      
+      predX2[i] <- 1*beta2[i-1]
+      beta2[i] ~ dnorm(predX2[i], eta.p2)	# coefficiencts for temperature
+      
+      # Observation model    
+      predY[i] <- beta0 + beta1[i]*prate[i] + beta2[i]*temp[i] 
+      y[i] ~ dnorm(predY[i], tau.o)	# Observation variation
     }
     
     }", fill=TRUE)
 sink()
 
-# Bundle data
-jags.data <- list(Y=Y, prate=prate, temp=temp, nind=nind, dur=dur)
+# Run model for each bird
+for (i in 1:length(un.id)) {
+  
+  y <- Y[i,]
+  p <- prcp[i,]
+  temp <- mintemp[i,]
+  d <- mdates$duration + 1
+  
+  b1 <- beta1[i,]
+  b2 <- beta2[i,]
+  bird <- dat$animal_id[i]
+  
+  # Bundle data
+  jags.data <- list(y=y, prate=p, temp=temp, dur=d)
+  
+  # Initial values
+  inits <- function() {list(mu1=rnorm(1), mu2=rnorm(1),
+                            eta.p1=1, eta.p2=1, tau.o=1,
+                            beta0=rnorm(1), beta1=b1[1:d], beta2=b2[1:d])}
+  
+  # Parameters monitored
+  params <- c("sd.r", "sd.q1", "sd.q2","beta0", "beta1", "beta2")
+  
+  # MCMC settings
+  ni <- 120000
+  nb <- 80000
+  nt <- 1
+  nc <- 3
+  
+  # Run model
+  out <- jags(jags.data, inits, params, "R/dlm_odba_ind.txt", n.thin=nt, n.chains=nc, n.burnin=nb, n.iter=ni, parallel=TRUE)
+  
+  # Print R hat
+  print(range(out$Rhat))
+  
+  filename = paste0("results/mtemp-prate_ODBA_", bird, ".Rdata" )
+  save(file=filename, list="out")
+  
+  smry <- as.data.frame(out1$summary)
+  
+  csvname = paste0("results/mtemp-prate_dlmODBA_summary_", bird, ".csv" )
+  write_csv(smry, csvname)
+  
+}
 
-
-# Forced random walks
-inits <- function() {list(mu0=rnorm(nind), mu1=rnorm(nind), mu2=rnorm(nind), mu3=rnorm(nind),
-                          tau.p0=rep(1,nind), tau.p1=rep(1,nind), tau.p2=rep(1,nind), 
-                          tau.o=rep(1,nind),
-                          beta0=rnorm(nind), beta1=beta1, beta2=beta2, beta3=beta3)}
 
 # Parameters monitored
 params <- c("sd.r", "sd.q0", "sd.q1", "sd.q2", 
