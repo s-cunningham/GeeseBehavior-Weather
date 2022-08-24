@@ -1,10 +1,9 @@
 #**********************************************************************************************************************************
 #**********************************************************************************************************************************
 
-# Project: Thesis Chapter 1 Objective 2
-# Date: 3 June 2019
+# Project: Geese Behavior & Weather
+# Date: 24 Aug 2022
 # Author: Stephanie Cunningham
-# Description: Converting Hypothesis 1 to time series format (dynamic linear model)
 
 #**********************************************************************************************************************************
 #**********************************************************************************************************************************
@@ -12,59 +11,36 @@
 library(tidyverse)
 library(jagsUI)
 
-rm(list=ls())
+# Read in weather covariates
+wdat <- read_csv("files_for_models/weather_covars.csv")
 
-dat1 <- read.csv("output/dlm_emm_data.csv", stringsAsFactors=FALSE)
-dat1 <- dat1[,-c(1,19:22,25,26)]
-dat1$date <- as.Date(dat1$date)
+# Read in ACC data
+dat <- read_csv("files_for_models/daily_odba_behavior.csv")
 
-wd <- read.csv("output/weather_covars.csv", stringsAsFactors=FALSE)
-wd <- wd[,-1]
-wd$date <- as.Date(wd$date)
+# Join weather and ACC data
+dat <- left_join(dat, wdat, by=c("animal_id", "date"))
 
-dat <- left_join(dat1, wd, by=c("animal_id", "date"))
-
-cor(dat[,c(20:ncol(dat))])
-
-nobs <- dim(dat)[1]
+# Save number of individuals and length of migration for each
 nind <- length(unique(dat$id_ind))
 
-# What is the maximum duration of spring migration?
-ranges <- aggregate(julian ~ animal_id + id_ind, data=dat, FUN=range)
-dr <- data.frame(id=ranges$animal_id, id_ind=ranges$id_ind, start=ranges$julian[,1], end=ranges$julian[,2])
-dr$id <- as.character(dr$id)
-dr <- mutate(dr, length=end-start)
-dr[dr$length==max(dr$length),]
-dur <- dr$length + 1
 
+# Scale covariates and take log odba
 dat[,c(20:31)] <- scale(dat[,c(20:31)]) 
 dat$log.odba <- log(dat$odba)
 
-dat <- dat[,c(1:13,32,14:31)]
-
 # Set up data matrices
 prcp <- matrix(NA, nrow=nind, ncol=max(dur))
-mtemp <- matrix(NA, nrow=nind, ncol=max(dur))
 mintemp <- matrix(NA, nrow=nind, ncol=max(dur))
-press <- matrix(NA, nrow=nind, ncol=max(dur))
-omega <- matrix(NA, nrow=nind, ncol=max(dur))
-clcov <- matrix(NA, nrow=nind, ncol=max(dur))
-weqsd <- matrix(NA, nrow=nind, ncol=max(dur))
 Y <- matrix(NA, nrow=nind, ncol=max(dur))
 beta1 <- matrix(NA, nrow=nind, ncol=max(dur))
 beta2 <- matrix(NA, nrow=nind, ncol=max(dur))
 beta3 <- matrix(NA, nrow=nind, ncol=max(dur))
 
 un.id <- unique(dat$animal_id)
-for (i in 1:length(un.id)) {
+for (i in 1:length(un.id)) {  ## change these columns ****************************
   r <- dim(dat[dat$animal_id==un.id[i],])[1]
   prcp[i,1:r] <- dat[dat$animal_id==un.id[i],31]
-  # mtemp[i,1:r] <- dat[dat$animal_id==un.id[i],21]
   mintemp[i,1:r] <- dat[dat$animal_id==un.id[i],22]
-  # press[i,1:r] <- dat[dat$animal_id==un.id[i],30]
-  # omega[i,1:r] <- dat[dat$animal_id==un.id[i],24]
-  # clcov[i,1:r] <- dat[dat$animal_id==un.id[i],29]
-  # weqsd[i,1:r] <- dat[dat$animal_id==un.id[i], 32 ]
   Y[i,1:r] <- dat[dat$animal_id==un.id[i],14] # ODBA
   beta1[i,1:r] <- rnorm(dur[i])
   beta2[i,1:r] <- rnorm(dur[i])
