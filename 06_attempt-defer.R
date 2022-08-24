@@ -178,7 +178,7 @@ sdLat <- left_join(acc, sdLat, by=c("animal_id", "date"))
 sdLat <- sdLat[,c(1,4,2,5,3,6)]
 names(sdLat)[5] <- "sdDIST"
 
-# Log-transform ODBA and SD of latitude
+# Log-transform ODBA and SD of latitude  #### **** Why is this breaking now?? **********************
 sdLat$lnSDdist <- log(sdLat$sdDIST)
 sdLat$lnOBDA <- log(sdLat$median.odba)
 
@@ -277,6 +277,11 @@ ggplot(eobs, aes(x=julian, y=abs(dy), col=animal_id)) + geom_line() +
 
 ggplot(eobs, aes(x=x_coord, y=y_coord, col=animal_id)) + geom_line() + 
   coord_cartesian(ylim=c(-1750000, -1000000), xlim=c(-2100000, -1500000)) + theme_bw() 
+
+
+
+
+
 
 ## Assign defer/attempt for birds with collars
 acc <- read.csv("files_for_models/daily_odba_behavior.csv")
