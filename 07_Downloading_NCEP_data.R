@@ -84,4 +84,6 @@ save(file="output/meantemp_all.Rdata", list="airt")
 save(file="output/maxtemp_all.Rdata", list="maxt")
 save(file="output/mintemp_all.Rdata", list="mint")
 
-
+# Save dataframe associated with downloading weather
+new <- new[,1:4]
+write_csv(new, "files_for_models/temperature_meta.csv")
