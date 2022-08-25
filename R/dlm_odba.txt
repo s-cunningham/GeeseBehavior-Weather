@@ -1,41 +1,41 @@
 
     model {
     
-    for (i in 1:nind) {
-      beta0[i] ~ dnorm(0, 0.01)
-      mu1[i] ~ dnorm(0, 0.01)
-      mu2[i] ~ dnorm(0, 0.01)
-      tau.p1[i] ~ dgamma(0.001, 0.001)
-      sd.q1[i] <- 1/sqrt(tau.p1[i])
-      tau.p2[i] ~ dgamma(0.001, 0.001)
-      sd.q2[i] <- 1/sqrt(tau.p2[i])
-    }
-    
-    for (i in 1:nind) {
-      tau.o[i] ~ dgamma(0.001, 0.001)
-      sd.r[i] <- 1/sqrt(tau.o[i])
-      
-      # Initialize
-      beta1[i,1] <- mu1[i]
-      beta2[i,1] <- mu2[i]
+    # Priors
+    beta0 ~ dnorm(0, 0.01)        # Intercept
 
-      predY[i,1] <- beta0[i] + beta1[i,1]*prate[i,1] + beta2[i,1]*temp[i,1] 
-      Y[i,1] ~ dnorm(predY[i,1], tau.o[i])
-    }
+    # mu1 ~ dnorm(0, 0.01)          # beta1[1]
+    # mu2 ~ dnorm(0, 0.01)          # beta2[1]
+    # 
+    # eta.p1 ~ dgamma(0.001, 0.001) # Process variance for covariate 1
+    # sd.q1 <- 1/sqrt(eta.p1)
+    # 
+    # eta.p2 ~ dgamma(0.001, 0.001) # Process variance for covariate 1
+    # sd.q2 <- 1/sqrt(eta.p2)
+    # 
+    # tau.o ~ dgamma(0.001, 0.001)
+    # sd.r <- 1/sqrt(tau.o)
     
+    # Initialize (fill in first value)
+    # beta1[1] <- mu1
+    # beta2[1] <- mu2
+    # 
+    # predY[1] <- beta0 + beta1[1]*prcp[1] + beta2[1]*temp[1] 
+    # y[1] ~ dnorm(predY[1], tau.o)
+
     # Likelihood
-    for (i in 1:nind) {
-      for (j in 2:dur[i]) {
-        
-        predX1[i,j] <- 1*beta1[i,j-1]
-        beta1[i,j] ~ dnorm(predX1[i,j], tau.p1[i])	# Process variation (coefficients for precipitation)
-        
-        predX2[i,j] <- 1*beta2[i,j-1]
-        beta2[i,j] ~ dnorm(predX2[i,j], tau.p2[i])	# Process variation (coefficiencts for temperature)
-        
-        predY[i,j] <- beta0[i] + beta1[i,j]*prate[i,j] + beta2[i,j]*temp[i,j] 
-        Y[i,j] ~ dnorm(predY[i,j], tau.o[i])	# Observation variation
-      }
-    }
+    # for (i in 2:dur) {
+    #   
+    #   # Process model 
+    #   predX1[i] <- 1*beta1[i-1]
+    #   beta1[i] ~ dnorm(predX1[i], eta.p1)	# coefficients for precipitation rate
+    #   
+    #   predX2[i] <- 1*beta2[i-1]
+    #   beta2[i] ~ dnorm(predX2[i], eta.p2)	# coefficiencts for temperature
+    #   
+    #   # Observation model    
+    #   predY[i] <- beta0 + beta1[i]*prcp[i] + beta2[i]*temp[i] 
+    #   y[i] ~ dnorm(predY[i], tau.o)	      # Observation variation
+    # }
     
     }
