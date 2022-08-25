@@ -1,0 +1,38 @@
+
+    model {
+    
+    # Priors
+    beta0 ~ dnorm(0, 0.01)        # Intercept
+
+    mu1 ~ dnorm(0, 0.01)          # beta1[1]
+    mu2 ~ dnorm(0, 0.01)          # beta2[1]
+    
+    eta.p1 ~ dgamma(0.001, 0.001) # Process variance for covariate 1
+    sd.q1 <- 1/sqrt(eta.p1)
+    
+    eta.p2 ~ dgamma(0.001, 0.001) # Process variance for covariate 1
+    sd.q2 <- 1/sqrt(eta.p2)
+
+    # Initialize (fill in first value)
+    beta1[1] <- mu1
+    beta2[1] <- mu2
+
+    predY[1] <- ilogit(beta0 + beta1[1]*prcp[1] + beta2[1]*temp[1])
+    y[1] ~ dbinom(predY[1], n[1])
+
+    # Likelihood
+    for (i in 2:dur) {
+
+      # Process model
+      predX1[i] <- 1*beta1[i-1]
+      beta1[i] ~ dnorm(predX1[i], eta.p1)	# coefficients for precipitation rate
+
+      predX2[i] <- 1*beta2[i-1]
+      beta2[i] ~ dnorm(predX2[i], eta.p2)	# coefficiencts for temperature
+
+      # Observation model
+      predY[i] <- ilogit(beta0 + beta1[i]*prcp[i] + beta2[i]*temp[i])
+      y[i] ~ dbinom(predY[i], n[i])	      # Observation variation
+    }
+    
+    }
