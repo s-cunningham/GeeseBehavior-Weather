@@ -93,7 +93,7 @@ cat("
       weight[j] <- delta[j]/sumD
         for (i in 1:nind) {
       # For each time period into the past, compute weighted ODBA variable
-        antX1[j,i] <- weight[j]*odba[i,days-j+1]
+        antX1[j,i] <- weight[j]*ptf[i,days-j+1]
         }
     # Reorder weights from recent to older
     weightOrdered[days-j+1] <- weight[j]
@@ -107,9 +107,9 @@ cat("
     cum.weight[j] <- sum(weightOrdered[1:j])
     }
     
-    # Compute antecedent ODBA by summing weighted ODBA variable over past days
+    # Compute antecedent PTF by summing weighted PTF variable over past days
     for (i in 1:nind) {
-    antODBA[i] <- sum(antX1[,i])
+    antPTF[i] <- sum(antX1[,i])
     }
     
     ## Likelihood
