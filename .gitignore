@@ -3,6 +3,9 @@ data/
 output/
 doc/
 
+# Files
+.Rdata
+
 # History files
 .Rhistory
 .Rapp.history
