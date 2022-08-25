@@ -110,6 +110,9 @@ for (i in 1:length(un.id)) {
   mig_dates <- rbind(mig_dates, new)
 }
 
+# Add one to be inclusive of start and end dates
+mig_dates$duration <- mig_dates$duration + 1
+
 # Write to file
 write_csv(mig_dates, "files_for_models/migration_dates.csv")
 
