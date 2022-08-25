@@ -174,11 +174,11 @@ for (i in 1:length(un.id)) {
 }
 
 # Join ACC and latitude SD
-sdLat <- left_join(acc, sdLat, by=c("animal_id", "date"))
+sdLat <- left_join(sdLat,acc,  by=c("animal_id", "date"))
 sdLat <- sdLat[,c(1,4,2,5,3,6)]
 names(sdLat)[5] <- "sdDIST"
 
-# Log-transform ODBA and SD of latitude  #### **** Why is this breaking now?? **********************
+# Log-transform ODBA and SD of latitude  
 sdLat$lnSDdist <- log(sdLat$sdDIST)
 sdLat$lnOBDA <- log(sdLat$median.odba)
 
