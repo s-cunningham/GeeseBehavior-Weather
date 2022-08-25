@@ -6,6 +6,8 @@ library(tidyverse)
 library(sp)
 library(adehabitatLT)
 
+theme_set(theme_minimal())
+
 #### Point-specific GPS locations ####
 
 ## Ornitela: Read files and summarize
@@ -180,29 +182,41 @@ names(sdLat)[5] <- "sdDIST"
 
 # Log-transform ODBA and SD of latitude  
 sdLat$lnSDdist <- log(sdLat$sdDIST)
-sdLat$lnOBDA <- log(sdLat$median.odba)
+sdLat$lnODBA <- log(sdLat$median.odba)
 
 # Replicate Fig. 4 from Shreven et al. 2021
 un.id <- unique(sdLat$animal_id)
 for (i in 1:length(un.id)) {
   temp <- sdLat[sdLat$animal_id==un.id[i],]
-  p <- ggplot(temp, aes(x=lnSDdist, y=lnOBDA, col=julian)) + geom_point(size=3) +
+  p <- ggplot(temp, aes(x=lnSDdist, y=lnODBA, col=julian)) + geom_point(size=3) +
            ggtitle(un.id[i]) +
-    coord_cartesian(xlim=c(-1, 15), ylim=c(-4.5, 0)) + theme_bw()
+    coord_cartesian(xlim=c(-1, 15), ylim=c(-4.5, 0))
   print(p)
 }
 
-ggplot(sdLat, aes(x=lnSDdist, y=lnOBDA, color=animal_id)) + geom_point() +
-  coord_cartesian(xlim=c(-1, 15)) + theme_bw()
+ggplot(sdLat, aes(x=lnSDdist, y=lnODBA, color=animal_id)) + geom_point() +
+  coord_cartesian(xlim=c(-1, 15)) 
 
+## Assign defer/attempt for birds with collars
+acc <- read.csv("files_for_models/daily_odba_behavior.csv")
+acc <- acc[acc$tag!="EOBS",]
 
+# Add new column
+acc$defer <- 0
+acc$defer[acc$animal_id=="17766" | acc$animal_id=="17769" | acc$animal_id=="17814" |
+            acc$animal_id=="RP23F" | acc$animal_id=="LM39F" | acc$animal_id=="RP19F" |
+            acc$animal_id=="RP20F"] <- 1
 
+acc <- acc[,c(1,8,19)]
+acc <- distinct(acc)
+
+write_csv(acc, "files_for_models/attempt_defer_collars.csv")
 
 #### e-obs geese ####
 
 acc <- read.csv("files_for_models/daily_odba_behavior.csv")
 
-# what happens if compare OBDA to distance from previous day's location?
+# what happens if compare ODBA to distance from previous day's location?
 acc <- acc[acc$year==2012 | acc$year==2013,]
 acc <- acc[,c(1:6,18)]
 
@@ -223,7 +237,7 @@ for (i in 1:length(un.id)) {
   rawtraj <- as.ltraj(coordinates(spdf), date=spdf$date, id=spdf$animal_id, burst=spdf$key, typeII=TRUE)
   
   # Check if locations are regularly spaced
-  is.regular(rawtraj)
+  adehabitatLT::is.regular(rawtraj)
   
   # Regularize trajectories, round values
   refda <- min(spdf$date)
@@ -257,40 +271,32 @@ eobs <- eobs[!is.na(eobs$dy),]
 # Log-transform ODBA and difference in latitude
 eobs$lnDIST <- log(abs(eobs$dist))
 eobs$lnDISTy <- log(abs(eobs$dy))
-eobs$lnOBDA <- log(eobs$median.odba)
+eobs$lnODBA <- log(eobs$median.odba)
 
 un.id <- unique(eobs$animal_id)
 for (i in 1:length(un.id)) {
   temp <- eobs[eobs$animal_id==un.id[i],]
-  p <- ggplot(temp, aes(x=lnDISTy, y=lnOBDA, col=julian)) + geom_point(size=3) +
+  p <- ggplot(temp, aes(x=lnDISTy, y=lnODBA, col=julian)) + geom_point(size=3) +
     ggtitle(un.id[i]) +
-    coord_cartesian(xlim=c(-5, 15), ylim=c(-5, 0)) + theme_bw()
+    coord_cartesian(xlim=c(-5, 15), ylim=c(-5, 0)) 
   print(p)
 }
 
-ggplot(eobs, aes(x=lnDISTy, y=lnOBDA, col=animal_id)) + geom_point(size=3) +
-  coord_cartesian(xlim=c(0, 15)) + theme_bw()
+ggplot(eobs, aes(x=lnDISTy, y=lnODBA, col=animal_id)) + geom_point(size=3) +
+  coord_cartesian(xlim=c(0, 15)) 
 
-ggplot(eobs, aes(x=julian, y=median.odba, col=animal_id)) + geom_line() + theme_bw()
+ggplot(eobs, aes(x=julian, y=median.odba, col=animal_id)) + geom_line()
 ggplot(eobs, aes(x=julian, y=abs(dy), col=animal_id)) + geom_line() + 
-  coord_cartesian(ylim=c(0, 2000)) + theme_bw() 
+  coord_cartesian(ylim=c(0, 2000)) 
 
 ggplot(eobs, aes(x=x_coord, y=y_coord, col=animal_id)) + geom_line() + 
-  coord_cartesian(ylim=c(-1750000, -1000000), xlim=c(-2100000, -1500000)) + theme_bw() 
+  coord_cartesian(ylim=c(-1750000, -1000000), xlim=c(-2100000, -1500000)) + 
+  theme(panel.border=element_rect(color="black", fill=NA))
 
 
+b1 <- eobs[eobs$animal_id=='2838',]
 
+quantile(b1$lnDIST, probs=0.25)
 
-
-
-## Assign defer/attempt for birds with collars
-acc <- read.csv("files_for_models/daily_odba_behavior.csv")
-
-# Add new column
-acc$defer <- 0
-acc$defer[acc$tag=="EOBS"] <- NA
-acc$defer[acc$animal_id=="17766" | acc$animal_id=="17769" | acc$animal_id=="17814" |
-            acc$animal_id=="RP23F" | acc$animal_id=="LM39F" | acc$animal_id=="RP19F" |
-            acc$animal_id=="RP20F"] <- 1
-
+ggplot(b1, aes(x=julian, y=lnDIST)) + geom_line() + geom_hline(aes(yintercept=5.62))
 
