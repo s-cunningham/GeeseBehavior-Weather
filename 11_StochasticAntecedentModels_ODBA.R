@@ -53,16 +53,16 @@ chars <- "MF"
 pop <- ifelse(apply(response[,1], 1, sjmisc::str_contains, c("M", "F"), logic='or'), 1, 2)
 
 # Scale covariates and take log odba
-dat[,c(16,18)] <- scale(dat[,c(16,18)]) 
+dat[,18] <- scale(dat[,18]) 
 
 # Set up data matrices
 nind <- nrow(response)
 Y <- matrix(NA,nrow=nind, ncol=min(mdates$duration))
+days <- min(mdates$duration)
+response$yrnr <- as.numeric(factor(response$year, levels=c(2017, 2018), labels=c(1,2)))
 
-un.id <- unique(dat$animal_id)
 for (i in 1:length(un.id)) {
-  r <- dim(dat[dat$animal_id==un.id[i],])[1]
-  Y[i,1:r] <- dat[dat$animal_id==un.id[i],27] # ln(ODBA) standardized
+  Y[i,] <- dat[dat$animal_id==un.id[i] & dat$RevRelDay<=days,18] 
 }
 
 # Run JAGS model
@@ -113,19 +113,19 @@ cat("
     ## Likelihood
     for (i in 1:nind) {
       defer[i] ~ dbern(p[i])
-      logit(p[i]) <- beta0[year[i]] + beta1*antODBA[i] + beta2*pop[i] + beta3*antPTF[i]*pop[i]
+      logit(p[i]) <- beta0[year[i]] + beta1*antODBA[i] + beta2*pop[i] + beta3*antODBA[i]*pop[i]
     }
 
     }", fill=TRUE)
 sink()
 
 # Bundle data
-jags.data <- list(defer=response$defer, nind=nind, odba=Y, year=response$year, 
-                  un.yr=2, pop=pop, days) 
+jags.data <- list(defer=response$defer, nind=nind, odba=Y, year=response$yrnr, 
+                  un.yr=2, pop=pop, days=days) 
 
 # Initial values
 inits <- function() {list(beta0=rnorm(2), beta1=rnorm(1), beta2=rnorm(1), beta3=rnorm(1), 
-                          delta=rep(1,days), sd.alpha=runif(2, -1, 1))}
+                          delta=rep(1,days), alpha=runif(2, -1, 1))}
 
 # Parameters monitored
 params <- c("beta0", "beta1", "beta2", "beta3", "delta","antODBA",
