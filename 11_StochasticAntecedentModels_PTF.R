@@ -143,6 +143,7 @@ nc <- 3
 out <- jags(jags.data, inits, params, "R/sam_ptf.txt", n.thin=nt, n.chains=nc, n.burnin=nb, n.iter=ni, parallel=TRUE)
 
 print(out, digits=3)
+whiskerplot(out, c("beta1", "beta2", "beta3"))
 
 # Save output
 smry <- as.data.frame(out$summary)
