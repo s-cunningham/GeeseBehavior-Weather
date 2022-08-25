@@ -11,6 +11,8 @@
 library(tidyverse)
 library(jagsUI)
 
+set.seed(123)
+
 # Read in weather covariates
 wdat <- read_csv("files_for_models/weather_covars.csv")
 
