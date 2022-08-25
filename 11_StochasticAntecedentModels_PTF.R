@@ -12,6 +12,8 @@
 library(tidyverse)
 library(jagsUI)
 
+set.seed(123)
+
 # Read in ACC data
 dat <- read_csv("files_for_models/daily_odba_behavior.csv")
 dat <- as.data.frame(dat)
@@ -141,3 +143,11 @@ nc <- 3
 out <- jags(jags.data, inits, params, "R/sam_ptf.txt", n.thin=nt, n.chains=nc, n.burnin=nb, n.iter=ni, parallel=TRUE)
 
 print(out, digits=3)
+
+# Save output
+smry <- as.data.frame(out$summary)
+write_csv(smry, "results/PTF_sam.csv")
+
+save(file="results/PTF_sam.Rdata", list="out")
+
+

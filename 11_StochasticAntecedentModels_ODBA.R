@@ -12,6 +12,8 @@
 library(tidyverse)
 library(jagsUI)
 
+set.seed(123)
+
 # Read in ACC data
 dat <- read_csv("files_for_models/daily_odba_behavior.csv")
 dat <- as.data.frame(dat)
@@ -53,7 +55,7 @@ chars <- "MF"
 pop <- ifelse(apply(response[,1], 1, sjmisc::str_contains, c("M", "F"), logic='or'), 1, 2)
 
 # Scale covariates and take log odba
-dat[,18] <- scale(dat[,18]) 
+dat[,18] <- scale(dat[,18])
 
 # Set up data matrices
 nind <- nrow(response)
@@ -141,4 +143,10 @@ nc <- 3
 out <- jags(jags.data, inits, params, "R/sam_odba.txt", n.thin=nt, n.chains=nc, n.burnin=nb, n.iter=ni, parallel=TRUE)
 
 print(out, digits=3)
+whiskerplot(out, c("beta1", "beta2", "beta3"))
 
+# Save output
+smry <- as.data.frame(out$summary)
+write_csv(smry, "results/ODBA_sam_20220825.csv")
+
+save(file="results/ODBA_sam.Rdata", list="out")
