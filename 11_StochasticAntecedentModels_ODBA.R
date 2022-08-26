@@ -75,15 +75,15 @@ cat("
     ## Priors
     # Regression parameters
     for (i in 1:2) {
-        beta0[i] ~ dnorm(0, tau.alpha)
+        beta0[i] ~ dnorm(0, tau.alpha)   # Random year effect
     }
     tau.alpha <- 1/(sd.alpha*sd.alpha)
-    sd.alpha ~ dunif(0,1)
+    sd.alpha ~ dunif(0,2)
     
-    beta1 ~ dnorm(0, 0.01)
-    beta2 ~ dnorm(0, 0.01)
-    beta3 ~ dnorm(0, 0.01)
-
+    beta1 ~ dnorm(0, 0.01)      # Antecedent ODBA
+    beta2 ~ dnorm(0, 0.01)      # population
+    beta3 ~ dnorm(0, 0.01)      # Antecedent ODBA * population
+    
     # Dirichlet prior for daily ODBA weights
     for(j in 1:days){
       delta[j] ~ dgamma(1,1)
@@ -115,7 +115,7 @@ cat("
     ## Likelihood
     for (i in 1:nind) {
       defer[i] ~ dbern(p[i])
-      logit(p[i]) <- beta0[year[i]] + beta1*antODBA[i] + beta2*pop[i] + beta3*antODBA[i]*pop[i]
+      logit(p[i]) <- beta0[year[i]] + beta1*antODBA[i] + beta2*pop[i] + beta3*antODBA[i]*pop[i] + alpha[j]
     }
 
     }", fill=TRUE)
