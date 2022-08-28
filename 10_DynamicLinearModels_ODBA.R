@@ -129,7 +129,7 @@ for (i in 1:length(un.id)) {
   
   b1 <- beta1[i,]
   b2 <- beta2[i,]
-  bird <- dat$animal_id[i]
+  bird <- unique(dat$animal_id)[i]
   
   # Bundle data
   jags.data <- list(y=y, prcp=p, temp=temp, dur=d)
@@ -157,7 +157,7 @@ for (i in 1:length(un.id)) {
   filename = paste0("results/mtemp-prate_ODBA_", bird, ".Rdata" )
   save(file=filename, list="out")
   
-  smry <- as.data.frame(out1$summary)
+  smry <- as.data.frame(out$summary)
   
   csvname = paste0("results/mtemp-prate_dlmODBA_summary_", bird, ".csv" )
   write_csv(smry, csvname)

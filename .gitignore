@@ -2,6 +2,7 @@
 data/
 output/
 doc/
+results/
 
 # History files
 .Rhistory
