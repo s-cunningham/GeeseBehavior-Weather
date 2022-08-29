@@ -82,10 +82,10 @@ cat("
     model {
     
     # Priors
-    beta0 ~ dnorm(0, 0.01)        # Intercept
+    beta0 ~ dnorm(0, 1/2.25)        # Intercept
 
-    mu1 ~ dnorm(0, 0.01)          # beta1[1]
-    mu2 ~ dnorm(0, 0.01)          # beta2[1]
+    mu1 ~ dnorm(0, 1/2.25)          # beta1[1]
+    mu2 ~ dnorm(0, 1/2.25)          # beta2[1]
     
     eta.p1 ~ dgamma(0.001, 0.001) # Process variance for covariate 1
     sd.q1 <- 1/sqrt(eta.p1)
@@ -130,7 +130,7 @@ for (i in 1:length(un.id)) {
   
   b1 <- beta1[i,]
   b2 <- beta2[i,]
-  bird <- dat$animal_id[i]
+  bird <- unique(dat$animal_id)[i]
   
   # Bundle data
   jags.data <- list(y=y, n=n, prcp=p, temp=temp, dur=d)
@@ -158,7 +158,7 @@ for (i in 1:length(un.id)) {
   filename = paste0("results/mtemp-prate_PTF_", bird, ".Rdata" )
   save(file=filename, list="out")
   
-  smry <- as.data.frame(out1$summary)
+  smry <- as.data.frame(out$summary)
   
   csvname = paste0("results/mtemp-prate_dlmPTF_summary_", bird, ".csv" )
   write_csv(smry, csvname)
