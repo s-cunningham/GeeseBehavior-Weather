@@ -75,10 +75,10 @@ cat("
     ## Priors
     # Regression parameters
     for (i in 1:2) {
-        beta0[i] ~ dnorm(0, tau.alpha)   # Random year effect
+        beta0[i] ~ dnorm(mu_beta0, tau.alpha)
     }
-    tau.alpha <- 1/(sd.alpha*sd.alpha)
-    sd.alpha ~ dunif(0,2)
+    mu_beta0 ~ dnorm(0, 1/10)
+    tau.alpha ~ dgamma(0.01, 0.01)
     
     beta1 ~ dnorm(0, 0.01)      # Antecedent ODBA
     beta2 ~ dnorm(0, 0.01)      # population
@@ -115,7 +115,7 @@ cat("
     ## Likelihood
     for (i in 1:nind) {
       defer[i] ~ dbern(p[i])
-      logit(p[i]) <- beta0[year[i]] + beta1*antODBA[i] + beta2*pop[i] + beta3*antODBA[i]*pop[i] + alpha[j]
+      logit(p[i]) <- beta0[year[i]] + beta1*antODBA[i] + beta2*pop[i] + beta3*antODBA[i]*pop[i]
     }
 
     }", fill=TRUE)
@@ -126,7 +126,7 @@ jags.data <- list(defer=response$defer, nind=nind, odba=Y, year=response$yrnr,
                   un.yr=2, pop=pop, days=days) 
 
 # Initial values
-inits <- function() {list(beta0=rnorm(2), beta1=rnorm(1), beta2=rnorm(1), beta3=rnorm(1), 
+inits <- function() {list(mu_beta0=rnorm(1), beta1=rnorm(1), beta2=rnorm(1), beta3=rnorm(1), 
                           delta=rep(1,days), alpha=runif(2, -1, 1))}
 
 # Parameters monitored

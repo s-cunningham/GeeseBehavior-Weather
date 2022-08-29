@@ -4,11 +4,11 @@
     ## Priors
     # Regression parameters
     for (i in 1:2) {
-        beta0[i] ~ dnorm(0, tau.alpha)
+        beta0[i] ~ dnorm(mu_beta0, tau.alpha)
     }
-    tau.alpha <- 1/(sd.alpha*sd.alpha)
-    sd.alpha ~ dunif(0,1)
-    
+    mu_beta0 ~ dnorm(0, 1/10)
+    tau.alpha ~ dgamma(0.01, 0.01)
+
     beta1 ~ dnorm(0, 0.01)
     beta2 ~ dnorm(0, 0.01)
     beta3 ~ dnorm(0, 0.01)
