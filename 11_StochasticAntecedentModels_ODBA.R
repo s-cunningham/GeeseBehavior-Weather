@@ -77,7 +77,7 @@ cat("
     for (i in 1:2) {
         beta0[i] ~ dnorm(mu_beta0, tau.beta0)
     }
-    mu_beta0 ~ dnorm(0, 0.1)
+    mu_beta0 ~ dnorm(0, 1/2)
     tau.beta0 ~ dgamma(0.01, 0.01)
     sd.beta0 <- sqrt(1/tau.beta0)
 
@@ -128,7 +128,7 @@ jags.data <- list(defer=response$defer, nind=nind, odba=Y, year=response$yrnr,
                   un.yr=2, pop=pop, days=days) 
 
 # Initial values
-inits <- function() {list(mu_beta0=rnorm(1), beta1=rnorm(1), beta2=rnorm(1), beta3=rnorm(1), 
+inits <- function() {list(mu_beta0=rnorm(1,0,0.001), beta1=rnorm(1), beta2=rnorm(1), beta3=rnorm(1), 
                           delta=rep(1,days), alpha=runif(2, -1, 1))}
 
 # Parameters monitored
@@ -136,8 +136,8 @@ params <- c("mu_beta0", "sd.beta0", "beta0", "beta1", "beta2", "beta3", "delta",
              "weight", "antX1", "weightOrdered", "cum.weight")
 
 # MCMC settings
-ni <- 10000  
-nb <- 5000
+ni <- 12000  
+nb <- 6000
 nt <- 1
 nc <- 3
 

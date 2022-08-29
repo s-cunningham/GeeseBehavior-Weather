@@ -73,7 +73,7 @@ cat("
     model {
     
     ## Priors
-    # Regression parameters
+    # Random year effect
     for (i in 1:2) {
         beta0[i] ~ dnorm(mu_beta0, tau.beta0)
     }
