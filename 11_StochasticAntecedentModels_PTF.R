@@ -54,7 +54,7 @@ response <- read_csv("files_for_models/attempt_defer_collars.csv")
 chars <- "MF"
 pop <- ifelse(apply(response[,1], 1, sjmisc::str_contains, c("M", "F"), logic='or'), 1, 2)
 
-# Scale covariates and take log odba
+# Scale covariates 
 dat[,16] <- scale(dat[,16]) 
 
 # Set up data matrices
