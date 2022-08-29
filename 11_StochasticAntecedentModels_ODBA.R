@@ -75,11 +75,13 @@ cat("
     ## Priors
     # Regression parameters
     for (i in 1:2) {
-        beta0[i] ~ dnorm(mu_beta0, tau.alpha)
+        beta0[i] ~ dnorm(mu_beta0, tau.beta0)
     }
-    mu_beta0 ~ dnorm(0, 1/10)
-    tau.alpha ~ dgamma(0.01, 0.01)
-    
+    mu_beta0 ~ dnorm(0, 0.1)
+    tau.beta0 ~ dgamma(0.01, 0.01)
+    sd.beta0 <- sqrt(1/tau.beta0)
+
+    # Slope paramters
     beta1 ~ dnorm(0, 0.01)      # Antecedent ODBA
     beta2 ~ dnorm(0, 0.01)      # population
     beta3 ~ dnorm(0, 0.01)      # Antecedent ODBA * population
@@ -130,12 +132,12 @@ inits <- function() {list(mu_beta0=rnorm(1), beta1=rnorm(1), beta2=rnorm(1), bet
                           delta=rep(1,days), alpha=runif(2, -1, 1))}
 
 # Parameters monitored
-params <- c("beta0", "beta1", "beta2", "beta3", "delta","antODBA",
+params <- c("mu_beta0", "sd.beta0", "beta0", "beta1", "beta2", "beta3", "delta","antODBA",
              "weight", "antX1", "weightOrdered", "cum.weight")
 
 # MCMC settings
-ni <- 5000  
-nb <- 2500
+ni <- 10000  
+nb <- 5000
 nt <- 1
 nc <- 3
 
@@ -144,6 +146,8 @@ out <- jags(jags.data, inits, params, "R/sam_odba.txt", n.thin=nt, n.chains=nc, 
 
 print(out, digits=3)
 whiskerplot(out, c("beta1", "beta2", "beta3"))
+
+traceplot(out, parameters=c("beta0", "sd.beta0"))
 
 # Save output
 smry <- as.data.frame(out$summary)
