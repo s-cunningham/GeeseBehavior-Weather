@@ -64,15 +64,15 @@ beta3 <- c(out$samples[[1]][,7], out$samples[[2]][,7], out$samples[[3]][,7])
 
 # Predict
 pred_length <- 100
-ptf_pred <- seq(-3.86,3.10,length.out=pred_length)
+ptf_pred <- seq(-3,3,length.out=pred_length)
 
 nmcmc <- out$mcmc.info$n.samples
 
 ptf_gr <- matrix(, nmcmc, pred_length)
 ptf_mc <- matrix(, nmcmc, pred_length)
 for (i in 1:pred_length) {
-  ptf_gr[,i] <- inv.logit(beta0 + beta1*ptf_pred[i] + beta2*1 + beta3*ptf_pred[i]*1)
-  ptf_mc[,i] <- inv.logit(beta0 + beta1*ptf_pred[i] + beta2*0 + beta3*ptf_pred[i]*0)
+  ptf_gr[,i] <- inv.logit(beta0 + beta1*ptf_pred[i] + beta2 + beta3*ptf_pred[i])
+  ptf_mc[,i] <- inv.logit(beta0 + beta1*ptf_pred[i] )
 }
 
 ptf_gr_qt <- apply(ptf_gr, 2, quantile, probs=c(0.5, 0.1, 0.90))
