@@ -123,7 +123,7 @@ sink()
 for (i in 1:length(un.id)) {
   
   y <- Y[i,]
-  n <- n[i,]
+  N <- n[i,]
   p <- prcp[i,]
   temp <- mintemp[i,]
   d <- mdates$duration[i] 
@@ -133,7 +133,7 @@ for (i in 1:length(un.id)) {
   bird <- unique(dat$animal_id)[i]
   
   # Bundle data
-  jags.data <- list(y=y, n=n, prcp=p, temp=temp, dur=d)
+  jags.data <- list(y=y, n=N, prcp=p, temp=temp, dur=d)
   
   # Initial values
   inits <- function() {list(mu1=rnorm(1), mu2=rnorm(1),
