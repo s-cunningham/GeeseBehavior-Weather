@@ -53,7 +53,7 @@ mdates <- mdates[mdates$animal_id %in% un.id,]
 # Scale covariates
 dat[,16] <- scale(dat[,16]) 
 
-## Results of PTF as covariate and plot
+#### Results of PTF as covariate and plot ####
 load("results/PTF_sam.Rdata")
 
 # Set up posterior samples
@@ -87,4 +87,38 @@ ggplot(df, aes(color=Population, fill=Population)) +
   geom_ribbon(aes(x=x, ymin=lo1, ymax=up1), alpha=0.2, linetype="dotted") +
   geom_line(aes(x=x, y=y), size=1) 
 
+
+#### Results of PTF as covariate and plot ####
+load("results/ODBA_sam.Rdata")
+
+# Set up posterior samples
+beta0 <- c(out$samples[[1]][,1], out$samples[[2]][,1], out$samples[[3]][,1])
+beta1 <- c(out$samples[[1]][,2], out$samples[[2]][,2], out$samples[[3]][,2])
+beta2 <- c(out$samples[[1]][,3], out$samples[[2]][,3], out$samples[[3]][,3])
+beta3 <- c(out$samples[[1]][,4], out$samples[[2]][,4], out$samples[[3]][,4])
+
+# Predict
+pred_length <- 100
+odba_pred <- seq(0.026,1.55,length.out=pred_length)
+
+nmcmc <- out$mcmc.info$n.samples
+
+odba_gr <- matrix(, nmcmc, pred_length)
+odba_mc <- matrix(, nmcmc, pred_length)
+for (i in 1:pred_length) {
+  odba_gr[,i] <- inv.logit(beta0 + beta1*odba_pred[i] + beta2 + beta3*odba_pred[i])
+  odba_mc[,i] <- inv.logit(beta0 + beta1*odba_pred[i] )
+}
+
+odba_gr_qt <- apply(odba_gr, 2, quantile, probs=c(0.5, 0.1, 0.90))
+odba_mc_qt <- apply(odba_mc, 2, quantile, probs=c(0.5, 0.1, 0.90))
+
+df1 <- data.frame(y=odba_gr_qt[1,], x=odba_pred, up1=odba_gr_qt[2,], lo1=odba_gr_qt[3,], Population="Greenland")
+df2 <- data.frame(y=odba_mc_qt[1,], x=odba_pred, up1=odba_mc_qt[2,], lo1=odba_mc_qt[3,], Population="Midcontinent")
+
+df <- rbind(df1, df2)
+
+ggplot(df, aes(color=Population, fill=Population)) + 
+  geom_ribbon(aes(x=x, ymin=lo1, ymax=up1), alpha=0.2, linetype="dotted") +
+  geom_line(aes(x=x, y=y), size=1) 
 
