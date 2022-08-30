@@ -2,15 +2,16 @@
     model {
     
     ## Priors
-    # Regression parameters
-    for (i in 1:2) {
-        beta0[i] ~ dnorm(mu_beta0, tau.beta0)
-    }
-    mu_beta0 ~ dnorm(0, 1/5)
-    tau.beta0 ~ dgamma(0.01, 0.01)
-    sd.beta0 <- sqrt(1/tau.beta0)
+    # Random year effect
+    # for (i in 1:2) {
+    #     beta0[i] ~ dnorm(mu_beta0, tau.beta0)
+    # }
+    # mu_beta0 ~ dnorm(0, 1/5)
+    # tau.beta0 ~ dgamma(0.01, 0.01)
+    # sd.beta0 <- sqrt(1/tau.beta0)
 
     # Slope paramters
+    beta0 ~ dnorm(0, 0.01)
     beta1 ~ dnorm(0, 0.01)
     beta2 ~ dnorm(0, 0.01)
     beta3 ~ dnorm(0, 0.01)
@@ -46,7 +47,7 @@
     ## Likelihood
     for (i in 1:nind) {
       defer[i] ~ dbern(p[i])
-      logit(p[i]) <- beta0[year[i]] + beta1*antPTF[i] + beta2*pop[i] + beta3*antPTF[i]*pop[i]
+      logit(p[i]) <- beta0 + beta1*antPTF[i] + beta2*pop[i] + beta3*antPTF[i]*pop[i]
     }
 
     }

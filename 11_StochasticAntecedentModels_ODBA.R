@@ -74,14 +74,7 @@ cat("
     
     ## Priors
     # Regression parameters
-    for (i in 1:2) {
-        beta0[i] ~ dnorm(mu_beta0, tau.beta0)
-    }
-    mu_beta0 ~ dnorm(0, 1/2)
-    tau.beta0 ~ dgamma(0.01, 0.01)
-    sd.beta0 <- sqrt(1/tau.beta0)
-
-    # Slope paramters
+    beta0 ~ dnorm(0, 0.01)      # Intercept
     beta1 ~ dnorm(0, 0.01)      # Antecedent ODBA
     beta2 ~ dnorm(0, 0.01)      # population
     beta3 ~ dnorm(0, 0.01)      # Antecedent ODBA * population
@@ -117,27 +110,26 @@ cat("
     ## Likelihood
     for (i in 1:nind) {
       defer[i] ~ dbern(p[i])
-      logit(p[i]) <- beta0[year[i]] + beta1*antODBA[i] + beta2*pop[i] + beta3*antODBA[i]*pop[i]
+      logit(p[i]) <- beta0 + beta1*antODBA[i] + beta2*pop[i] + beta3*antODBA[i]*pop[i]
     }
 
     }", fill=TRUE)
 sink()
 
 # Bundle data
-jags.data <- list(defer=response$defer, nind=nind, odba=Y, year=response$yrnr, 
-                  un.yr=2, pop=pop, days=days) 
+jags.data <- list(defer=response$defer, nind=nind, odba=Y,pop=pop, days=days) 
 
 # Initial values
-inits <- function() {list(mu_beta0=rnorm(1,0,0.001), beta1=rnorm(1), beta2=rnorm(1), beta3=rnorm(1), 
+inits <- function() {list(beta0=rnorm(1), beta1=rnorm(1), beta2=rnorm(1), beta3=rnorm(1), 
                           delta=rep(1,days), alpha=runif(2, -1, 1))}
 
 # Parameters monitored
-params <- c("mu_beta0", "sd.beta0", "beta0", "beta1", "beta2", "beta3", "delta","antODBA",
+params <- c("beta0", "beta1", "beta2", "beta3", "delta","antODBA",
              "weight", "antX1", "weightOrdered", "cum.weight")
 
 # MCMC settings
-ni <- 12000  
-nb <- 6000
+ni <- 5000  
+nb <- 2500
 nt <- 1
 nc <- 3
 
@@ -147,7 +139,7 @@ out <- jags(jags.data, inits, params, "R/sam_odba.txt", n.thin=nt, n.chains=nc, 
 print(out, digits=3)
 whiskerplot(out, c("beta1", "beta2", "beta3"))
 
-traceplot(out, parameters=c("beta0", "sd.beta0"))
+traceplot(out, parameters=c("beta1", "beta0"))
 
 # Save output
 smry <- as.data.frame(out$summary)
