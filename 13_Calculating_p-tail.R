@@ -4,10 +4,10 @@ options(scipen=999)
 
 #### ODBA ####
 # Set up matrices and data frames
-mintemp <- matrix(NA, ncol=35, nrow=121)
+mintemp <- matrix(NA, ncol=35, nrow=120) # 35 birds x 120 days longest migration
 mintemp <- as.data.frame(mintemp)
 
-prcp <- matrix(NA, ncol=35, nrow=121)
+prcp <- matrix(NA, ncol=35, nrow=120)
 prcp <- as.data.frame(prcp)
 
 # Load file list
@@ -46,10 +46,10 @@ write_csv(mintemp, "results/ODBAmintemp_ptail.csv")
 
 #### PTF ####
 # Set up matrices and data frames
-mintemp <- matrix(NA, ncol=35, nrow=121)
+mintemp <- matrix(NA, ncol=35, nrow=120)
 mintemp <- as.data.frame(mintemp)
 
-prcp <- matrix(NA, ncol=35, nrow=121)
+prcp <- matrix(NA, ncol=35, nrow=120)
 prcp <- as.data.frame(prcp)
 
 # Load file list
