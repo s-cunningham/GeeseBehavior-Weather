@@ -58,13 +58,13 @@ load("results/PTF_sam.Rdata")
 
 # Set up posterior samples
 beta0 <- c(out$samples[[1]][,1], out$samples[[2]][,1], out$samples[[3]][,1])
-beta1 <- c(out$samples[[1]][,5], out$samples[[2]][,5], out$samples[[3]][,5])
-beta2 <- c(out$samples[[1]][,6], out$samples[[2]][,6], out$samples[[3]][,6])
-beta3 <- c(out$samples[[1]][,7], out$samples[[2]][,7], out$samples[[3]][,7])
+beta1 <- c(out$samples[[1]][,2], out$samples[[2]][,2], out$samples[[3]][,2])
+beta2 <- c(out$samples[[1]][,3], out$samples[[2]][,3], out$samples[[3]][,3])
+beta3 <- c(out$samples[[1]][,4], out$samples[[2]][,4], out$samples[[3]][,4])
 
 # Predict
 pred_length <- 100
-ptf_pred <- seq(-3,3,length.out=pred_length)
+ptf_pred <- seq(-3.86,3.10,length.out=pred_length)
 
 nmcmc <- out$mcmc.info$n.samples
 
