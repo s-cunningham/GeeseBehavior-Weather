@@ -1,432 +1,175 @@
+## 2022-08-30
+
 library(tidyverse)
-library(gridExtra)
-library(pracma)
 
 options(scipen=999, digits=3)
 
-#### ODBA ####
-# Read in calculated proportions
-b1.odba <- read.csv("output/ODBA_prate_proportions.csv")
-b1.odba <- b1.odba[,-1]
+theme_set(theme_bw())
 
-b2.odba <- read.csv("output/ODBA_mintemp_proportions.csv")
-b2.odba <- b2.odba[,-1]
+#### Read in bird data ####
 
-# read data for bird ID numbers
-bird <- read.csv("output/dlm_emm_data.csv", stringsAsFactors=FALSE)
-bird <- bird[,-c(1,19:22,25,26)]
-bird$date <- as.Date(bird$date)
+# Read in weather covariates
+wdat <- read_csv("files_for_models/weather_covars.csv")
 
-# add IDs 
-ids <- unique(bird$animal_id)
-colnames(b1.odba) <- ids
-colnames(b2.odba) <- ids
+# Read in ACC data
+dat <- read_csv("files_for_models/daily_odba_behavior.csv")
 
-b1.odba <- gather(b1.odba, key="animal_id", value="PRATE.prop.g0", 1:37)
-b2.odba <- gather(b2.odba, key="animal_id", value="MINTE.prop.g0", 1:37)
-odba <- data.frame(animal_id=b1.odba$animal_id, PRATE.prop=b1.odba$PRATE.prop.g0, MINTE.prop=b2.odba$MINTE.prop.g0)
-odba <- odba[complete.cases(odba),]
-odba$rev.rel.day <- NA
+# Join weather and ACC data
+dat <- left_join(dat, wdat, by=c("animal_id", "date"))
+dat <- as.data.frame(dat)
 
-un.id <- unique(odba$animal_id)
-for (i in 1:length(un.id)) {
-  odba[odba$animal_id==un.id[i],4] <- seq(1:nrow(odba[odba$animal_id==un.id[i],]))
-}
+# read in migration dates
+mdates <- read_csv("files_for_models/migration_dates.csv")
 
-# remove birds with not enough data
-bird <- bird[bird$animal_id!="RP08F" & bird$animal_id!="RP15F" & bird$animal_id!="2164"
-             & bird$animal_id!="2176" & bird$animal_id!="2160" & bird$animal_id!="2167",]
+# save maximum duration of migration period
+dur <- max(mdates$duration) 
 
-# Assign new numbers to reflect removal of shortened winters, and to make pop/reproductive status sequential
-bird$pop2 <- 1
-bird$pop2[bird$pop=="NAMC"] <- 2
-N.order <- order(bird$year, decreasing = FALSE)
-bird <- bird[N.order,]
-N.order <- order(bird$attempt, decreasing=FALSE)
-bird <- bird[N.order,]
-N.order <- order(bird$pop2, decreasing = FALSE)
-bird <- bird[N.order,]
-id <- unique(bird$animal_id)
-plot_id <- numeric(dim(bird)[1])
-for (i in 1:dim(bird)[1]) {
-  plot_id[i] <- which(id == bird$animal_id[i])
-}
-bird <- data.frame(bird, plot_id)
-bird <- bird[,-20]
-
-ids <- as.data.frame(unique(cbind(bird$id_ind, bird$animal_id, bird$plot_id, bird$year, bird$attempt)))
-names(ids) <- c("id_ind", "animal_id", "plot_id", "year", "attempt")
-# write.csv(ids, "output/corresponding_ids.csv")
-
-# Join to posterior summary
-dat <- left_join(bird, odba, by=c("animal_id", "rev.rel.day"))
-dat <- dat[!is.na(dat$animal_id),]
-
-# Add negative to ones with mean below 0
-dat$attempt <- factor(dat$attempt, levels=c("0", "1"))
-
-# Subset by covariate
-odba.na <- dat[dat$pop=="NAMC",]
-odba.gr <- dat[dat$pop=="GRLD",]
-
-names(dat)[21:22] <- c("PRATE", "TEMP")
-
-dat <- gather(dat, 21:22, key="variable", value="value")
-
-dat$variable <- ifelse(dat$variable=="TEMP", "Temperature", "Precipitation Rate")
-dat$pop <- ifelse(dat$pop=="GRLD", "Greenland", "North America") 
-dat$attempt <- ifelse(dat$attempt==1, "Attempt", "Defer")
-
-ggplot(dat, aes(x=value, group=animal_id, color=attempt, fill=attempt)) + 
-  geom_density(size=0.6, alpha=0.1) + 
-  facet_grid(variable~pop) + 
-  theme_classic() + ylab("Density") + xlab("Proportion of Posterior Samples") + 
-  scale_color_manual(values=c("#2166ac", "#b2182b")) + 
-  scale_fill_manual(values=c("#2166ac", "#b2182b")) + 
-  theme(legend.justification=c(1,1.05),legend.title=element_text(size=16, face="bold"), 
-        legend.position=c(1,1), legend.text=element_text(size=14), 
-        panel.border=element_rect(color="black", fill=NA, size=0.5),
-        axis.text=element_text(size=14), axis.title=element_text(size=16, face="bold"),
-        strip.text=element_text(size=14, face="bold"),
-        plot.title=element_text(size=16, face="bold", hjust=0.5)) +
-  guides(fill=guide_legend(title="Reproductive\nStatus"), 
-         color=guide_legend(title="Reproductive\nStatus")) 
-
-# Plot 
-repro_list <- list('0'="Defer", '1'="Attempt")  
-repro_labeller <- function(variable,value) {
-  return(repro_list[value])
-}
-
-na.prate.odba <- ggplot(odba.na, aes(julian, as.factor(plot_id))) + geom_tile(aes(fill=PRATE.prop), colour = "black") + 
-  scale_fill_gradient2(midpoint=0.5, low="#2166ac", mid="white",high="#b2182b", space ="Lab", limits=c(0,1)) +
-  # scale_fill_gradient2(midpoint=0, low="#053061", mid="#f7f7f7",high="#67001f", space ="Lab") + 
-  coord_cartesian(xlim=c(35,155)) +
-  theme_classic() + xlab("Julian Day") + ylab("Individual ID") + #ggtitle("Precipitation Rate (mm/hr)") +
-  guides(fill = guide_colourbar(title="Posterior\nProportion")) +
-  theme(legend.position = 'none',
-        # legend.justification=c(1,1.05),legend.title=element_text(size=16, face="bold"), 
-        # legend.position=c(1,1), legend.text=element_text(size=14), 
-        panel.border=element_rect(color="black", fill=NA, size=0.5),
-        axis.text=element_text(size=14), axis.title=element_text(size=16, face="bold"),
-        strip.text.y=element_text(size=14, face="bold"),
-        plot.title=element_text(size=16, face="bold", hjust=0.5)) +
-  facet_grid(attempt~., space="free_y", scales="free_y", labeller=repro_labeller)  
-
-na.mtemp.odba <- ggplot(odba.na, aes(julian, as.factor(plot_id))) + geom_tile(aes(fill=MINTE.prop), colour = "black") + 
-  scale_fill_gradient2(midpoint=0.5, low="#2166ac", mid="white",high="#b2182b", space ="Lab", limits=c(-1,1)) +
-  # scale_fill_gradient2(midpoint=0, low="#053061", mid="#f7f7f7",high="#67001f", space ="Lab") + 
-  coord_cartesian(xlim=c(35,175)) +
-  theme_classic() + xlab("Julian Day") + ylab("Individual ID") + # ggtitle("Minimum Temperature (C)") +
-  guides(fill = guide_colourbar(title="Posterior\nProbability")) +
-  theme(legend.position="none",
-        # legend.justification=c(1,1.05),legend.title=element_text(size=16, face="bold"), 
-        # legend.position=c(1,1), legend.text=element_text(size=14), 
-        panel.border=element_rect(color="black", fill=NA, size=0.5),
-        axis.text.x=element_text(size=14), axis.title.x=element_text(size=16, face="bold"),
-        axis.text.y=element_blank(), axis.title.y=element_blank(),
-        strip.text.y=element_text(size=14, face="bold"),
-        plot.title=element_text(size=16, face="bold", hjust=0.5)) +
-  facet_grid(attempt~., space="free_y", scales="free_y", labeller=repro_labeller)  
-
-# grid.arrange(na.prate.odba, na.mtemp.odba, ncol=2)
-
-gr.prate.odba <- ggplot(odba.gr, aes(julian, as.factor(plot_id))) + geom_tile(aes(fill=PRATE.prop), colour = "black") + 
-  scale_fill_gradient2(midpoint=0.5, low="#2166ac", mid="white",high="#b2182b", space ="Lab", limits=c(0,1)) +
-  # scale_fill_gradient2(midpoint=0, low="#053061", mid="#f7f7f7",high="#67001f", space ="Lab") + 
-  coord_cartesian(xlim=c(75,150)) +
-  theme_classic() + xlab("Julian Day") + ylab("Individual ID") + ggtitle("Precipitation Rate (mm/hr)") +
-  guides(fill = guide_colourbar(title="Posterior\nProbability")) +
-  theme(legend.position = 'none',
-        # legend.justification=c(1,1.05),legend.title=element_text(size=16, face="bold"), 
-        # legend.position=c(1,1), legend.text=element_text(size=14), 
-        panel.border=element_rect(color="black", fill=NA, size=0.5),
-        axis.text.y=element_text(size=14), axis.title.y=element_text(size=16, face="bold"),
-        axis.text.x=element_text(size=14), axis.title.x=element_blank(),
-        strip.text.y=element_text(size=14, face="bold"),
-        plot.title=element_text(size=16, face="bold", hjust=0.5)) +
-  facet_grid(attempt~., space="free_y", scales="free_y", labeller=repro_labeller)  
-
-gr.mtemp.odba <- ggplot(odba.gr, aes(julian, as.factor(plot_id))) + geom_tile(aes(fill=MINTE.prop), colour = "black") + 
-  scale_fill_gradient2(midpoint=0.5, low="#2166ac", mid="white",high="#b2182b", space ="Lab", limits=c(0,1)) +
-  # scale_fill_gradient2(midpoint=0, low="#053061", mid="#f7f7f7",high="#67001f", space ="Lab") + 
-  coord_cartesian(xlim=c(75,160)) +
-  theme_classic() + xlab("Julian Day") + ylab("Individual ID") + ggtitle("Minimum Temperature (C)") +
-  guides(fill = guide_colourbar(title="Proportion\nSamples > 0")) +
-  theme(legend.justification=c(1,1),legend.title=element_text(size=16, face="bold"), 
-        legend.position=c(1,1), legend.text=element_text(size=14), 
-        legend.background=element_rect(fill=NA),
-        panel.border=element_rect(color="black", fill=NA, size=0.5),
-        axis.text.x=element_text(size=14), axis.title=element_blank(),
-        axis.text.y=element_blank(), 
-        strip.text.y=element_text(size=14, face="bold"),
-        plot.title=element_text(size=16, face="bold", hjust=0.5)) +
-  facet_grid(attempt~., space="free_y", scales="free_y", labeller=repro_labeller)  
-  
-# grid.arrange(gr.prate.odba, gr.mtemp.odba, ncol=2)
-
-lay <- rbind(c(1,1,1,2,2,2),
-             c(1,1,1,2,2,2),
-             c(1,1,1,2,2,2),
-             c(1,1,1,2,2,2),
-             c(1,1,1,2,2,2),
-             c(1,1,1,2,2,2),
-             c(3,3,3,4,4,4),
-             c(3,3,3,4,4,4),
-             c(3,3,3,4,4,4),
-             c(3,3,3,4,4,4))
-grid.arrange(gr.prate.odba, gr.mtemp.odba, na.prate.odba, na.mtemp.odba, layout_matrix=lay)
-
-
-# Calculate geometric mean proportion of posterior samples greater than 0
-gm.PRATE <- numeric(31)
-gm.MINTE <- numeric(31)
+# subset to migration dates
+dat$RelDay <- NA
+dat$RevRelDay <- NA
+dat$migration <- NA
 un.id <- unique(dat$animal_id)
 for (i in 1:length(un.id)) {
-  temp <- dat[dat$animal_id==un.id[i],]
   
-  gm.PRATE[i] <- nthroot(prod(temp$PRATE.prop), nrow(temp))
-  gm.MINTE[i] <- nthroot(prod(temp$MINTE.prop), nrow(temp))
+  # subset migration dates
+  md <- mdates[mdates$animal_id==un.id[i],]
   
-  # temp$PRATE.prop[temp$PRATE.prop==0] <- 0.0000000000000000000000000000000000001
-  # logPR <- log(temp$PRATE.prop)
-  # gm.PRATE[i] <- exp((1/nrow(temp))*sum(logPR[1:nrow(temp)]))
-  # 
-  # temp$MINTE.prop[temp$MINTE.prop==0] <- 0.0000000000000000000000000000000000001
-  # logMT <- log(temp$MINTE.prop)
-  # gm.MINTE[i] <- exp((1/nrow(temp))*sum(logMT[1:nrow(temp)]))
+  # Create vector of days
+  mdays <- md$start:md$end
+  
+  # Add column, indicate when is migration
+  dat$RelDay[dat$animal_id==un.id[i] & (dat$julian %in% mdays)] <- 1:length(mdays)
+  dat$RevRelDay[dat$animal_id==un.id[i] & (dat$julian %in% mdays)] <- length(mdays):1
+  dat$migration[dat$animal_id==un.id[i] & (dat$julian %in% mdays)] <- "yes"
+  
 }
 
-hist(gm.MINTE)
-hist(gm.PRATE)
+# Subset to just migration
+dat <- dat[!is.na(dat$migration), ]
 
+# log odba
+dat$lnODBAmedian <- log(dat$median.odba)
 
-odba.gm <- data.frame(MINTE=gm.MINTE, PRATE=gm.PRATE, pop=unique(dat$id_ind))
-odba.gm$pop <- ifelse(odba.gm$pop<=22,"Greenland", "Midcontinent")
-odba.gm <- gather(odba.gm, key="var", value="value", 1:2)
+# Reorganize columns
+dat <- dat[,c(1,3,4,23,24,5:8,10,11,16,18,19,21)]
 
+#### Reading in and organizing posteriors ####
+# Read in calculated proportions for ODBA
+b1.odba <- read_csv("results/ODBAprcp_ptail.csv")
+b1.odba <- as.data.frame(b1.odba)
+b1.odba$RelDay <- 1:120
+b1.odba <- b1.odba[,c(36,1:35)]
+b1.odba <- pivot_longer(b1.odba, 2:36, names_to="animal_id", values_to="ODBA_prcp")
 
+b2.odba <- read_csv("results/ODBAmintemp_ptail.csv")
+b2.odba <- as.data.frame(b2.odba)
+b2.odba$RelDay <- 1:120
+b2.odba <- b2.odba[,c(36,1:35)]
+b2.odba <- pivot_longer(b2.odba, 2:36, names_to="animal_id", values_to="ODBA_temp")
 
+# Read in calculated proportions for ODBA
+b1.ptf <- read_csv("results/PTFprcp_ptail.csv")
+b1.ptf <- as.data.frame(b1.ptf)
+b1.ptf$RelDay <- 1:120
+b1.ptf <- b1.ptf[,c(36,1:35)]
+b1.ptf <- pivot_longer(b1.ptf, 2:36, names_to="animal_id", values_to="PTF_prcp")
 
-### Count number of days with "extreme" proportion above or below 0
+b2.ptf <- read_csv("results/PTFmintemp_ptail.csv")
+b2.ptf <- as.data.frame(b2.ptf)
+b2.ptf$RelDay <- 1:120
+b2.ptf <- b2.ptf[,c(36,1:35)]
+b2.ptf <- pivot_longer(b2.ptf, 2:36, names_to="animal_id", values_to="PTF_temp")
 
+# Join posterior summary to data
+dat <- left_join(dat, b1.odba, by=c("animal_id", "RelDay"))
+dat <- left_join(dat, b2.odba, by=c("animal_id", "RelDay"))
+dat <- left_join(dat, b1.ptf, by=c("animal_id", "RelDay"))
+dat <- left_join(dat, b2.ptf, by=c("animal_id", "RelDay"))
 
-for (i in 1:length(un.id)) {
-  temp <- temp <- dat[dat$animal_id==un.id[i],]
-  id <- un.id[i]
-  id.no <- temp$plot_id[1]
-  n.below <- sum(temp$PRATE.prop<(0.05))
-  n.above <- sum(temp$PRATE.prop>0.95)
-  n.days <- nrow(temp)
-  pct.below <- n.below/n.days * 100
-  pct.above <- n.above/n.days * 100
-  print(cbind(id, id.no, pct.below, pct.above))
-}
+# pivot longer
+dat <- pivot_longer(dat, 16:19, names_to="model", values_to="ptail")
+dat <- separate(dat, 16, into=c("response", "covariate"), sep="_", remove=FALSE) %>% as.data.frame()
 
-#### PTF ####
-# Read in calculated proportions
-b1.ptf <- read.csv("output/PTF_prate_proportions.csv")
-b1.ptf <- b1.ptf[,-1]
+#### Create heatmap ####
+dat$birdno <- as.character(factor(dat$animal_id, levels=unique(dat$animal_id),
+                                labels=c("M12GR1", "F18GR1", "F18GR2", "F18GR3",
+                                         "F18GR4", "F18GR5", "F18GR6", "F18GR7",
+                                         "F18GR8", "F18GR9", "F18GR10", "M12GR2",
+                                         "M12GR3", "M12GR4", "M12GR5", "M12GR6",
+                                         "M12GR7", "M13GR1", "M13GR2", "M13GR3",
+                                         "M13GR4", "M13GR5", "M13GR6", "M13GR7",
+                                         "M13GR8", "M17MC1", "F18MC6", "F17MC1",
+                                         "F17MC2", "F18MC3", "F18MC1",  "F18MC2",
+                                         "F17MC3", "F18MC4", "F18MC5")))
 
-b2.ptf <- read.csv("output/PTF_mintemp_proportions.csv")
-b2.ptf <- b2.ptf[,-1]
+dat$birdno <- factor(dat$birdno, levels=c("M12GR1", "M12GR2",
+                              "M12GR3", "M12GR4", "M12GR5", "M12GR6",
+                              "M12GR7", "M13GR1", "M13GR2", "M13GR3",
+                              "M13GR4", "M13GR5", "M13GR6", "M13GR7",
+                              "M13GR8", 
+                              "F18GR1", "F18GR2", "F18GR3",
+                              "F18GR4", "F18GR5", "F18GR6", "F18GR7",
+                              "F18GR8", "F18GR9", "F18GR10",
+                              "M17MC1", "F17MC1",
+                              "F17MC2", "F18MC3", "F18MC1",  "F18MC2",
+                              "F17MC3", "F18MC4", "F18MC5", "F18MC6"))
 
-# read data for bird ID numbers
-bird <- read.csv("output/dlm_emm_data.csv", stringsAsFactors=FALSE)
-bird <- bird[,-c(1,19:22,25,26)]
-bird$date <- as.Date(bird$date)
+# Split by response
+odba <- dat[dat$response=="ODBA",]
+ptf <- dat[dat$response=="PTF",]
 
-# add IDs 
-ids <- unique(bird$animal_id)
-colnames(b1.ptf) <- ids
-colnames(b2.ptf) <- ids
+# Save colors
+color_breaks <- c(0, 0.15, 0.3, 0.5, 0.7, 0.85, 1)
+colors <- c("#2166ac","#4393c3", "#f7f7f7", "#f7f7f7", "#f7f7f7", "#d6604d", "#b2182b")
 
-b1.ptf <- gather(b1.ptf, key="animal_id", value="PRATE.prop.g0", 1:37)
-b2.ptf <- gather(b2.ptf, key="animal_id", value="MINTE.prop.g0", 1:37)
-ptf <- data.frame(animal_id=b1.ptf$animal_id, PRATE.prop=b1.ptf$PRATE.prop.g0, MINTE.prop=b2.ptf$MINTE.prop.g0)
-ptf <- ptf[complete.cases(ptf),]
-ptf$rev.rel.day <- NA
+# Facet names
+var_names <- c(prcp="Precipitation (mm)",
+               temp="Minimum Temperature (C)")
 
-un.id <- unique(ptf$animal_id)
-for (i in 1:length(un.id)) {
-  ptf[ptf$animal_id==un.id[i],4] <- seq(1:nrow(ptf[ptf$animal_id==un.id[i],]))
-}
-
-# remove birds with not enough data
-bird <- bird[bird$animal_id!="RP08F" & bird$animal_id!="RP15F" & bird$animal_id!="2164"
-             & bird$animal_id!="2176" & bird$animal_id!="2160" & bird$animal_id!="2167",]
-
-# Assign new numbers to reflect removal of shortened winters, and to make pop/reproductive status sequential
-bird$pop2 <- 1
-bird$pop2[bird$pop=="NAMC"] <- 2
-N.order <- order(bird$year, decreasing = FALSE)
-bird <- bird[N.order,]
-N.order <- order(bird$attempt, decreasing=FALSE)
-bird <- bird[N.order,]
-N.order <- order(bird$pop2, decreasing = FALSE)
-bird <- bird[N.order,]
-id <- unique(bird$animal_id)
-plot_id <- numeric(dim(bird)[1])
-for (i in 1:dim(bird)[1]) {
-  plot_id[i] <- which(id == bird$animal_id[i])
-}
-bird <- data.frame(bird, plot_id)
-bird <- bird[,-20]
-
-# unique(cbind(bird$id_ind, bird$animal_id, bird$plot_id))
-
-# Join to posterior summary
-dat <- left_join(bird, ptf, by=c("animal_id", "rev.rel.day"))
-dat <- dat[!is.na(dat$animal_id),]
-
-# Add negative to ones with mean below 0
-dat$attempt <- factor(dat$attempt, levels=c("0", "1"))
-
-# Subset by covariate
-ptf.na <- dat[dat$pop=="NAMC",]
-ptf.gr <- dat[dat$pop=="GRLD",]
-
-
-gr.prate.ptf <- ggplot(ptf.gr, aes(julian, as.factor(plot_id))) + geom_tile(aes(fill=PRATE.prop), colour = "black") + 
-  scale_fill_gradient2(midpoint=0.5, low="#2166ac", mid="white",high="#b2182b", space ="Lab", limits=c(0,1)) +
-  # scale_fill_gradient2(midpoint=0, low="#053061", mid="#f7f7f7",high="#67001f", space ="Lab") + 
-  coord_cartesian(xlim=c(75,150)) +
-  theme_classic() + xlab("Julian Day") + ylab("Individual ID") + ggtitle("Precipitation Rate (mm/hr)") +
-  theme(legend.position = 'none',
-        # legend.justification=c(1,1.05),legend.title=element_text(size=16, face="bold"), 
-        # legend.position=c(1,1), legend.text=element_text(size=14), 
-        panel.border=element_rect(color="black", fill=NA, size=0.5),
-        axis.title.y=element_text(size=16, face="bold"),
-        axis.text=element_text(size=14),#axis.title.x=element_text(size=16, face="bold"),
-        axis.title.x=element_blank(),
-        strip.text.y=element_text(size=14, face="bold"),
-        plot.title=element_text(size=16, face="bold", hjust=0.5)) +
-  facet_grid(attempt~., space="free_y", scales="free_y", labeller=repro_labeller)  
-
-gr.mtemp.ptf <- ggplot(ptf.gr, aes(julian, as.factor(plot_id))) + geom_tile(aes(fill=MINTE.prop), colour = "black") + 
-  scale_fill_gradient2(midpoint=0.5, low="#2166ac", mid="white",high="#b2182b", space ="Lab", limits=c(0,1)) +
-  # scale_fill_gradient2(midpoint=0, low="#053061", mid="#f7f7f7",high="#67001f", space ="Lab") + 
-  coord_cartesian(xlim=c(75,160)) +
-  theme_classic() + xlab("Julian Day") + ylab("Individual ID") + ggtitle("Minimum Temperature (C)") +
-  guides(fill = guide_colourbar(title="Proportion\nSamples > 0")) +
-  theme(legend.justification=c(1,1),legend.title=element_text(size=16, face="bold"), 
-        legend.position=c(1,1), legend.text=element_text(size=14), 
+# Plot
+ggplot(odba, aes(x=julian, y=factor(birdno))) + geom_tile(aes(fill=ptail), colour = "black") + 
+  scale_fill_gradientn(limits=c(0,1), colors=colors[c(1, seq_along(colors), length(colors))],
+                       values=c(scales::rescale(color_breaks, from=c(0,1)))) +
+  xlab("Date") +
+  scale_x_continuous(breaks=c(30,60,90,120,150), labels=c("30-Jan","01-Mar","30-Mar","30-Apr","30-May")) +
+  facet_grid(.~covariate, labeller=as_labeller(var_names)) + 
+  guides(fill=guide_colourbar(title="Proportion\nSamples >0")) +
+  theme(legend.justification=c(0,0),
+        legend.position=c(0,0.01), 
+        legend.title=element_text(size=15, face="bold"), 
+        legend.text=element_text(size=13), 
         legend.background=element_rect(fill=NA),
         panel.border=element_rect(color="black", fill=NA, size=0.5),
-        axis.text.x=element_text(size=14), #axis.title.x=element_text(size=16, face="bold"),
-        axis.title.x=element_blank(),
-        axis.text.y=element_blank(), axis.title.y=element_blank(),
-        strip.text.y=element_text(size=14, face="bold"),
-        plot.title=element_text(size=16, face="bold", hjust=0.5)) +
-  facet_grid(attempt~., space="free_y", scales="free_y", labeller=repro_labeller)  
-
-# grid.arrange(gr.prate.ptf, gr.mtemp.ptf, ncol=2)
-
-na.prate.ptf <- ggplot(ptf.na, aes(julian, as.factor(plot_id))) + geom_tile(aes(fill=PRATE.prop), colour = "black") + 
-  scale_fill_gradient2(midpoint=0.5, low="#2166ac", mid="white",high="#b2182b", space ="Lab", limits=c(0,1)) +
-  # scale_fill_gradient2(midpoint=0, low="#053061", mid="#f7f7f7",high="#67001f", space ="Lab") + 
-  coord_cartesian(xlim=c(35,155)) +
-  theme_classic() + xlab("Julian Day") + ylab("Individual ID") + #ggtitle("Precipitation Rate (mm/hr)") +
-  theme(legend.position = 'none',
-        # legend.justification=c(1,1.05),legend.title=element_text(size=16, face="bold"), 
-        # legend.position=c(1,1), legend.text=element_text(size=14), 
-        panel.border=element_rect(color="black", fill=NA, size=0.5),
-        axis.text=element_text(size=14), axis.title=element_text(size=16, face="bold"),
-        strip.text.y=element_text(size=14, face="bold"),
-        plot.title=element_text(size=16, face="bold", hjust=0.5)) +
-  facet_grid(attempt~., space="free_y", scales="free_y", labeller=repro_labeller)  
-
-na.mtemp.ptf <- ggplot(ptf.na, aes(julian, as.factor(plot_id))) + geom_tile(aes(fill=MINTE.prop), colour = "black") + 
-  scale_fill_gradient2(midpoint=0.5, low="#2166ac", mid="white",high="#b2182b", space ="Lab", limits=c(0,1)) +
-  # scale_fill_gradient2(midpoint=0, low="#053061", mid="#f7f7f7",high="#67001f", space ="Lab") + 
-  coord_cartesian(xlim=c(35,175)) +
-  theme_classic() + xlab("Julian Day") + ylab("Individual ID") + #ggtitle("Minimum Temperature (C)") +
-  theme(legend.position = 'none',
-        # legend.justification=c(1,1.05),legend.title=element_text(size=16, face="bold"), 
-        # legend.position=c(1,1), legend.text=element_text(size=14), 
-        panel.border=element_rect(color="black", fill=NA, size=0.5),
-        axis.text.x=element_text(size=14), axis.title.x=element_text(size=16, face="bold"),
-        axis.text.y=element_blank(), axis.title.y=element_blank(),
-        strip.text.y=element_text(size=14, face="bold"),
-        plot.title=element_text(size=16, face="bold", hjust=0.5)) +
-  facet_grid(attempt~., space="free_y", scales="free_y", labeller=repro_labeller)  
-
-# grid.arrange(gr.prate.ptf, gr.mtemp.ptf, na.prate.ptf, na.mtemp.ptf, ncol=2)
-
-lay <- rbind(c(1,1,1,2,2,2),
-             c(1,1,1,2,2,2),
-             c(1,1,1,2,2,2),
-             c(1,1,1,2,2,2),
-             c(1,1,1,2,2,2),
-             c(1,1,1,2,2,2),
-             c(3,3,3,4,4,4),
-             c(3,3,3,4,4,4),
-             c(3,3,3,4,4,4),
-             c(3,3,3,4,4,4))
-grid.arrange(gr.prate.ptf, gr.mtemp.ptf, na.prate.ptf, na.mtemp.ptf, layout_matrix=lay)
-
-
-unique(cbind(dat$id_ind, dat$animal_id, dat$plot_id))
-
-# Calculate geometric mean proportion of posterior samples greater than 0
-gm.PRATE <- numeric(31)
-gm.MINTE <- numeric(31)
-un.id <- unique(dat$animal_id)
-for (i in 1:length(un.id)) {
-  temp <- dat[dat$animal_id==un.id[i],]
+        axis.text=element_text(size=11), 
+        axis.title.y=element_blank(),
+        axis.title.x=element_text(size=14, face="bold"),
+        strip.text.x=element_text(size=14, face="bold"),
+        strip.background=element_rect(fill="white"))
   
-  gm.PRATE[i] <- nthroot(prod(temp$PRATE.prop), nrow(temp))
-  gm.MINTE[i] <- nthroot(prod(temp$MINTE.prop), nrow(temp))
   
-  # temp$PRATE.prop[temp$PRATE.prop==0] <- 0.0000000000000000000000000000000000001
-  # logPR <- log(temp$PRATE.prop)
-  # gm.PRATE[i] <- exp((1/nrow(temp))*sum(logPR[1:nrow(temp)]))
-  # 
-  # temp$MINTE.prop[temp$MINTE.prop==0] <- 0.0000000000000000000000000000000000001
-  # logMT <- log(temp$MINTE.prop)
-  # gm.MINTE[i] <- exp((1/nrow(temp))*sum(logMT[1:nrow(temp)]))
-}
-
-
-ptf.gm <- data.frame(MINTE=gm.MINTE, PRATE=gm.PRATE, pop=unique(dat$id_ind))
-ptf.gm$pop <- ifelse(ptf.gm$pop<=22,"Greenland", "Midcontinent")
-ptf.gm <- gather(ptf.gm, key="var", value="value", 1:2)
-ptf.gm$response <- "PTF"
-odba.gm$response <- "ODBA"
-
-
-gm <- rbind(ptf.gm, odba.gm)
-gm$var <- ifelse(gm$var=="MINTE", "Min. Temp.", "Precip. Rate")
-
-ggplot(gm, aes(value)) + 
-  geom_histogram(aes(color=var, fill=var), alpha=0.5, binwidth = 0.05) +
-  ylab("Number of Individuals") + xlab("Geometric Mean (Proportion of Posterior Samples > 0)") +
-  theme_classic() + 
-  theme(legend.title=element_text(size=16, face="bold"),
-        legend.position=c(0.85,0.7), legend.text=element_text(size=14),
+ggplot(ptf, aes(x=julian, y=factor(birdno))) + geom_tile(aes(fill=ptail), colour = "black") + 
+  scale_fill_gradientn(limits=c(0,1), colors=colors[c(1, seq_along(colors), length(colors))],
+                       values=c(scales::rescale(color_breaks, from=c(0,1)))) +
+  xlab("Date") +
+  scale_x_continuous(breaks=c(30,60,90,120,150), labels=c("30-Jan","01-Mar","30-Mar","30-Apr","30-May")) +
+  facet_grid(.~covariate, labeller=as_labeller(var_names)) + 
+  guides(fill=guide_colourbar(title="Proportion\nSamples >0")) +
+  theme(legend.justification=c(0,0),
+        legend.position=c(0,0.01), 
+        legend.title=element_text(size=15, face="bold"), 
+        legend.text=element_text(size=13), 
+        legend.background=element_rect(fill=NA),
         panel.border=element_rect(color="black", fill=NA, size=0.5),
-        axis.text=element_text(size=14), axis.title=element_text(size=16, face="bold"),
-        strip.text=element_text(size=14, face="bold")) +
-  scale_color_manual(values=c("#2166ac", "#b2182b")) +
-  scale_fill_manual(values=c("#2166ac", "#b2182b")) +
-  labs(fill="Covariates", color="Covariates") +
-  facet_grid(response~pop, space="free_y", scales="free_y")
+        axis.text=element_text(size=11), 
+        axis.title.y=element_blank(),
+        axis.title.x=element_text(size=14, face="bold"),
+        strip.text.x=element_text(size=14, face="bold"),
+        strip.background=element_rect(fill="white"))
 
 
 
 
-un.id <- unique(ptf.b2.na$animal_id)
 
-for (i in 1:length(un.id)) {
-  temp <- ptf.b2.na[ptf.b2.na$animal_id==un.id[i],]
-  id <- un.id[i]
-  id.no <- temp$id_ind[1]
-  n.below <- sum(temp$f<(-0.95))
-  n.above <- sum(temp$f>0.95)
-  n.days <- nrow(temp)
-  pct.below <- round(n.below/n.days * 100, digits=3)
-  pct.above <- round(n.above/n.days * 100, digits=3)
-  print(cbind(id, id.no, pct.below, pct.above))
-}
+
 
 
