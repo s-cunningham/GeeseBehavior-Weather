@@ -40,6 +40,7 @@ for (i in 1:length(files)) {
   print(dim(beta2)[2])
 }
 
+# Save to file for plotting
 write.csv(prcp, "results/ODBAprcp_ptail.csv")
 write.csv(mintemp, "results/PTFmintemp_ptail.csv")
 
@@ -52,8 +53,8 @@ prcp <- matrix(NA, ncol=35, nrow=121)
 prcp <- as.data.frame(prcp)
 
 # Load file list
-files <- list.files("E:/ResearchProjects/GeeseBehavior-Weather/results/dlmPTF",  pattern=".Rdata", all.files=TRUE, full.names=TRUE)
-
+files <- list.files("E:/ResearchProjects/GeeseBehavior-Weather/results/dlmPTF", 
+                    pattern=".Rdata", all.files=TRUE, full.names=TRUE)
 
 # Loop over each file, calculate number of posterior samples >0
 for (i in 1:length(files)) {
@@ -82,7 +83,7 @@ for (i in 1:length(files)) {
   print(dim(beta2)[2])
 }
 
-
+# Save to file for plotting
 write.csv(prcp, "results/ODBAprcp_ptail.csv")
 write.csv(mintemp, "results/PTFmintemp_ptail.csv")
 
