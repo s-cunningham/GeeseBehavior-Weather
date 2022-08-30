@@ -2,7 +2,8 @@
 data/
 output/
 doc/
-results/
+dlmODBA/
+dlmPTF
 
 # History files
 .Rhistory
