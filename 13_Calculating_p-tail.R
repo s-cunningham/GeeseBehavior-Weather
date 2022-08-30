@@ -41,8 +41,8 @@ for (i in 1:length(files)) {
 }
 
 # Save to file for plotting
-write.csv(prcp, "results/ODBAprcp_ptail.csv")
-write.csv(mintemp, "results/ODBAmintemp_ptail.csv")
+write_csv(prcp, "results/ODBAprcp_ptail.csv")
+write_csv(mintemp, "results/ODBAmintemp_ptail.csv")
 
 #### PTF ####
 # Set up matrices and data frames
@@ -84,8 +84,8 @@ for (i in 1:length(files)) {
 }
 
 # Save to file for plotting
-write.csv(prcp, "results/PTFprcp_ptail.csv")
-write.csv(mintemp, "results/PTFmintemp_ptail.csv")
+write_csv(prcp, "results/PTFprcp_ptail.csv")
+write_csv(mintemp, "results/PTFmintemp_ptail.csv")
 
 
 
