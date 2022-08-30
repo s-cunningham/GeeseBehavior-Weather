@@ -2,20 +2,18 @@ library(tidyverse)
 
 options(scipen=999)
 
-
+#### ODBA ####
 # Set up matrices and data frames
-mintemp <- matrix(NA, ncol=34, nrow=115)
+mintemp <- matrix(NA, ncol=35, nrow=121)
 mintemp <- as.data.frame(mintemp)
 
-prate <- matrix(NA, ncol=34, nrow=115)
-prate <- as.data.frame(prate)
+prcp <- matrix(NA, ncol=35, nrow=121)
+prcp <- as.data.frame(prcp)
 
-# setwd("output/JAGS/ratioDLMs")
-setwd("output/JAGS/ratioDLMs/20210824/")
-files <- list.files("./",  pattern=".Rdata", all.files=TRUE, full.names=FALSE)
+# Load file list
+files <- list.files("E:/ResearchProjects/GeeseBehavior-Weather/results/dlmODBA",  pattern=".Rdata", all.files=TRUE, full.names=TRUE)
 
-# smry <- list.files("G:/ResearchProjects/Behavior_and_Weather/output/modelcoefficients/dlm/",  pattern=".csv", all.files=TRUE, full.names=FALSE)
-
+# Loop over each file, calculate number of posterior samples >0
 for (i in 1:length(files)) {
   
   # Load model output
@@ -23,19 +21,17 @@ for (i in 1:length(files)) {
   
   # Extract bird ID
   x <- str_split(files[i], "[:punct:]")
-  x1 <- lapply(x, function(.x) if(is.vector(.x)) t(.x) else (.x))
-  x2 <- lapply(x1, `[`,,4)
-  x <- unlist(x2)
+  x <- unlist(x[[1]][11])
   
   # save sims list
-  beta1 <- out1$sims.list$beta1
-  beta2 <- out1$sims.list$beta2
+  beta1 <- out$sims.list$beta1
+  beta2 <- out$sims.list$beta2
   
   for (j in 1:dim(beta1)[2]) {
-    prate[j,i] <- ifelse(unique(is.na(beta1[,j])),NA,sum(beta1[,j]>0)/105000)
-    names(prate)[i] <- x
+    prcp[j,i] <- ifelse(unique(is.na(beta1[,j])),NA,sum(beta1[,j]>0)/out$mcmc.info$n.samples)
+    names(prcp)[i] <- x
     
-    mintemp[j,i] <- ifelse(unique(is.na(beta2[,j])),NA,sum(beta2[,j]>0)/105000)
+    mintemp[j,i] <- ifelse(unique(is.na(beta2[,j])),NA,sum(beta2[,j]>0)/out$mcmc.info$n.samples)
     names(mintemp)[i] <- x
   }
   
@@ -44,37 +40,51 @@ for (i in 1:length(files)) {
   print(dim(beta2)[2])
 }
 
-setwd("G:/ResearchProjects/Behavior_and_Weather")
+write.csv(prcp, "results/ODBAprcp_ptail.csv")
+write.csv(mintemp, "results/PTFmintemp_ptail.csv")
 
-write.csv(prate, "output/20210901prate_ptail.csv")
-write.csv(mintemp, "output/20210901mintemp_ptail.csv")
+#### PTF ####
+# Set up matrices and data frames
+mintemp <- matrix(NA, ncol=35, nrow=121)
+mintemp <- as.data.frame(mintemp)
 
-setwd("output/modelcoefficients/dlm")
+prcp <- matrix(NA, ncol=35, nrow=121)
+prcp <- as.data.frame(prcp)
+
+# Load file list
+files <- list.files("E:/ResearchProjects/GeeseBehavior-Weather/results/dlmPTF",  pattern=".Rdata", all.files=TRUE, full.names=TRUE)
 
 
+# Loop over each file, calculate number of posterior samples >0
+for (i in 1:length(files)) {
+  
+  # Load model output
+  load(files[i])
+  
+  # Extract bird ID
+  x <- str_split(files[i], "[:punct:]")
+  x <- unlist(x[[1]][11])
+  
+  # save sims list
+  beta1 <- out$sims.list$beta1
+  beta2 <- out$sims.list$beta2
+  
+  for (j in 1:dim(beta1)[2]) {
+    prcp[j,i] <- ifelse(unique(is.na(beta1[,j])),NA,sum(beta1[,j]>0)/out$mcmc.info$n.samples)
+    names(prcp)[i] <- x
+    
+    mintemp[j,i] <- ifelse(unique(is.na(beta2[,j])),NA,sum(beta2[,j]>0)/out$mcmc.info$n.samples)
+    names(mintemp)[i] <- x
+  }
+  
+  print(x)
+  print(dim(beta1)[2])
+  print(dim(beta2)[2])
+}
 
 
+write.csv(prcp, "results/ODBAprcp_ptail.csv")
+write.csv(mintemp, "results/PTFmintemp_ptail.csv")
 
-# dat <- list.files("./",  pattern=".csv", all.files=TRUE, full.names=FALSE)
-# 
-# x <- str_split(dat, "[:punct:]")
-# x1 <- lapply(x, function(.x) if(is.vector(.x)) t(.x) else (.x))
-# x2 <- lapply(x1, `[`,,4])
-# x <- unlist(x2)
-# 
-# dat <- lapply(dat, FUN=read.csv, header=TRUE, stringsAsFactors=FALSE)
-# setwd("G:/ResearchProjects/Behavior_and_Weather")
-# 
-# 
-# for (i in 1:36) {
-#   dat[[i]]$animal_id <- x[i]
-# }
-# 
-# dat <- do.call("rbind", dat)
-# 
-# 
-# hist(dat$Rhat)
-# 
-# 
-# unique(dat[dat$Rhat>1.1,13])
+
 
