@@ -45,6 +45,13 @@ for (i in 1:length(files)) {
 
 prcp <- prcp[,c(1,3,19)]
 
+# Plot histogram of precipitation
+hist(prcp$prcp)
+range(prcp$prcp)
+
+prcp$prcp[prcp$prcp==-99999] <- NA
+
+# Write data
 write_csv(prcp, "files_for_models/daily_precip.csv")
 
 
