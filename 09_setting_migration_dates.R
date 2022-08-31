@@ -103,12 +103,14 @@ for (i in 1:length(un.id)) {
   ## Combine into data frame
   new <- data.frame(animal_id=temp$animal_id[1], start=start, end=end)
   
-  # Calculate duration
-  new <- mutate(new, duration=end-start)
-  
   # add row to existing data
   mig_dates <- rbind(mig_dates, new)
 }
+
+mig_dates$start[mig_dates$animal_id=="RP01F"] <- 59
+
+# Calculate duration
+mig_dates <- mutate(mig_dates, duration=end-start)
 
 # Add one to be inclusive of start and end dates
 mig_dates$duration <- mig_dates$duration + 1
