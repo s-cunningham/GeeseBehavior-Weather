@@ -6,9 +6,9 @@
 
 library(tidyverse)
 library(boot)
-# library(patchwork)
+library(patchwork)
 
-theme_set(theme_bw())
+theme_set(theme_classic())
 
 ## Load data
 dat <- read_csv("files_for_models/daily_odba_behavior.csv")
@@ -134,5 +134,72 @@ odba_plot <- ggplot(df, aes(color=Population, fill=Population)) +
   xlab("Scaled/Centered ln(median daily ODBA)") + 
   theme(legend.position="bottom")
 
+#### Plotting (cumulative and daily) weights ####
+
+scaleFUN <- function(x) sprintf("%.2f", x)
+
+## ODBA model
+load("results/ODBA_sam.Rdata")
+
+odba.cw <- data.frame(day=1:58, cumulative=out$mean$cum.weight, q2.5=out$q2.5$cum.weight, q97.5=out$q97.5$cum.weight)
+
+p1 <- ggplot(odba.cw) + geom_segment(aes(x=1, y=0, xend=58, yend=1), size=1, color="black") + 
+  geom_ribbon(aes(x=day, ymin=q2.5, ymax=q97.5), alpha=0.4) +
+  geom_point(aes(x=day, y=cumulative), shape=16, size=1) +
+  ylab("Cumulative Weight (ODBA)") + xlab("Days to Arrival on Breeding Areas") +
+  theme(axis.text=element_text(size=12),
+        axis.title.y=element_text(size=12, face="bold"),
+        axis.title.x=element_blank(),
+        panel.border=element_rect(color="black", fill=NA, size=0.5))
 
 
+odba.dw <- data.frame(index=seq(1,length(out$mean$weight),1), 
+                      ODBA=out$mean$weight, lcri=out$q2.5$weight, ucri=out$q97.5$weight)
+
+p3 <- ggplot(odba.dw, aes(x=index, y=ODBA)) + 
+  geom_segment(aes(x=index, xend=index, y=lcri, yend=ucri)) +
+  geom_point() +
+  coord_cartesian(ylim=c(0,0.10)) +
+  ylab("Daily Weight (ODBA)") +
+  xlab("Day of Migration") +
+  scale_y_continuous(labels=scaleFUN) +
+  theme(axis.text=element_text(size=11),
+        axis.title.y=element_text(size=12, face="bold"),
+        axis.title.x=element_blank(),
+        panel.border=element_rect(color="black", fill=NA, size=0.5))
+
+
+## PTF model
+load("results/PTF_sam.Rdata")
+
+ptf.cw <- data.frame(day=1:58, cumulative=out$mean$cum.weight, q2.5=out$q2.5$cum.weight, q97.5=out$q97.5$cum.weight)
+
+p2 <- ggplot(ptf.cw) + geom_segment(aes(x=1, y=0, xend=58, yend=1), size=1, color="black") + 
+  geom_ribbon(aes(x=day, ymin=q2.5, ymax=q97.5), alpha=0.4) +
+  geom_point(aes(x=day, y=cumulative), shape=16, size=1) +
+  ylab("Cumulative Weight (PTF)") + xlab("Days to Arrival on Breeding Areas") +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=12, face="bold"),
+        panel.border=element_rect(color="black", fill=NA, size=0.5))
+
+
+ptf.dw <- data.frame(index=seq(1,length(out$mean$weight),1), 
+                      PTF=out$mean$weight, lcri=out$q2.5$weight, ucri=out$q97.5$weight)
+
+p4 <- ggplot(ptf.dw, aes(x=index, y=PTF)) + 
+  geom_segment(aes(x=index, xend=index, y=lcri, yend=ucri)) +
+  geom_point() +
+  coord_cartesian(ylim=c(0,0.10)) +
+  ylab("Daily Weight (PTF)") +
+  xlab("Day of Migration") +
+  scale_y_continuous(labels=scaleFUN) +
+  theme(axis.text=element_text(size=11),
+        axis.title=element_text(size=12, face="bold"),
+        panel.border=element_rect(color="black", fill=NA, size=0.5))
+
+## Print plots
+# Cumulative weights
+p1 / p2
+
+# Daily weights
+p3 / p4
