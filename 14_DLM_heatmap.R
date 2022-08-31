@@ -4,7 +4,7 @@ library(tidyverse)
 
 options(scipen=999, digits=3)
 
-theme_set(theme_bw())
+theme_set(theme_classic())
 
 #### Read in bird data ####
 
