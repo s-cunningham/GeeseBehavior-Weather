@@ -51,7 +51,12 @@ un.id <- unique(dat$animal_id)
 mdates <- mdates[mdates$animal_id %in% un.id,]
 
 # Scale covariates
-dat[,16] <- scale(dat[,16]) 
+dat$median.odba <- log(dat$median.odba)
+dat[,c(16,18)] <- scale(dat[,c(16,18)]) 
+
+#### Plotting ln(median.ODBA) vs ptf by population ####
+ggplot(dat, aes(x=ptf, y=median.odba)) + geom_point() + facet_grid(.~pop)
+
 
 #### Results of PTF as covariate and plot ####
 load("results/PTF_sam.Rdata")
@@ -92,7 +97,7 @@ ptf_plot <- ggplot(df, aes(color=Population, fill=Population)) +
   theme(legend.position="bottom")
 
 
-#### Results of PTF as covariate and plot ####
+#### Results of ODBA as covariate and plot ####
 load("results/ODBA_sam.Rdata")
 
 # Set up posterior samples
@@ -128,4 +133,6 @@ odba_plot <- ggplot(df, aes(color=Population, fill=Population)) +
   geom_line(aes(x=x, y=y), size=1) + ylab("Probability of Breeding Deferral") +
   xlab("Scaled/Centered ln(median daily ODBA)") + 
   theme(legend.position="bottom")
+
+
 
