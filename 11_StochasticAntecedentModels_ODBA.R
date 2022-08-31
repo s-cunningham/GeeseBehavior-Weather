@@ -54,7 +54,10 @@ response <- read_csv("files_for_models/attempt_defer_collars.csv")
 chars <- "MF"
 pop <- ifelse(apply(response[,1], 1, sjmisc::str_contains, c("M", "F"), logic='or'), 1, 2)
 
+plot(dat$ptf, log(dat$median.odba))
+
 # Scale covariates and take log odba
+dat$median.odba <- log(dat$median.odba)
 dat[,18] <- scale(dat[,18])
 
 # Set up data matrices
