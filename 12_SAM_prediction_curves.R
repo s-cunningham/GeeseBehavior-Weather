@@ -93,8 +93,15 @@ df <- rbind(df1, df2)
 ptf_plot <- ggplot(df, aes(color=Population, fill=Population)) + 
   geom_ribbon(aes(x=x, ymin=lo1, ymax=up1), alpha=0.2, linetype="dotted") +
   geom_line(aes(x=x, y=y), size=1) + ylab("Probability of Breeding Deferral") +
-  xlab("Scaled/Centered Proportion time feeding") + 
-  theme(legend.position="bottom")
+  scale_color_manual(values=c("#2166ac","#b2182b")) +
+  scale_fill_manual(values=c("#2166ac","#b2182b")) +
+  xlab("Antecedent PTF") + 
+  theme(legend.position="none",
+        axis.text.x=element_text(size=12),
+        axis.text.y=element_blank(),
+        axis.title.x=element_text(size=12, face="bold"),
+        axis.title.y=element_blank(),
+        panel.border=element_rect(color="black", fill=NA, size=0.5))
 
 
 #### Results of ODBA as covariate and plot ####
@@ -131,8 +138,20 @@ df <- rbind(df1, df2)
 odba_plot <- ggplot(df, aes(color=Population, fill=Population)) + 
   geom_ribbon(aes(x=x, ymin=lo1, ymax=up1), alpha=0.2, linetype="dotted") +
   geom_line(aes(x=x, y=y), size=1) + ylab("Probability of Breeding Deferral") +
-  xlab("Scaled/Centered ln(median daily ODBA)") + 
-  theme(legend.position="bottom")
+  scale_color_manual(values=c("#2166ac","#b2182b")) +
+  scale_fill_manual(values=c("#2166ac","#b2182b")) +
+  xlab("Antecedent ODBA") + 
+  theme(legend.position=c(0,0), legend.justification=c(0,0),
+        legend.title=element_text(size=12, face="bold"), 
+        legend.text=element_text(size=11), 
+        legend.background=element_rect(fill=NA),
+        axis.text=element_text(size=12),
+        axis.title=element_text(size=12, face="bold"),
+        panel.border=element_rect(color="black", fill=NA, size=0.5))
+
+## Plot
+odba_plot + ptf_plot
+
 
 #### Plotting (cumulative and daily) weights ####
 
