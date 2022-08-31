@@ -53,7 +53,7 @@ mdates <- mdates[mdates$animal_id %in% un.id,]
 # Scale covariates
 dat$median.odba <- log(dat$median.odba)
 dat[,c(16,18)] <- scale(dat[,c(16,18)]) 
-
+ 
 #### Plotting ln(median.ODBA) vs ptf by population ####
 ggplot(dat, aes(x=ptf, y=median.odba)) + geom_point() + facet_grid(.~pop)
 
