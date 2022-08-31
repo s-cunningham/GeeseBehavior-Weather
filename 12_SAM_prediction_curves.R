@@ -51,7 +51,8 @@ un.id <- unique(dat$animal_id)
 mdates <- mdates[mdates$animal_id %in% un.id,]
 
 # Scale covariates
-dat[,16] <- scale(dat[,16]) 
+dat$median.odba <- log(dat$median.odba)
+dat[,c(16,18)] <- scale(dat[,c(16,18)]) 
 
 #### Results of PTF as covariate and plot ####
 load("results/PTF_sam.Rdata")
