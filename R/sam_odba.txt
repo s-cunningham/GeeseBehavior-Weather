@@ -3,10 +3,13 @@
     
     ## Priors
     # Regression parameters
-    beta0 ~ dnorm(0, 0.01)      # Intercept
-    beta1 ~ dnorm(0, 0.01)      # Antecedent ODBA
-    beta2 ~ dnorm(0, 0.01)      # population
-    beta3 ~ dnorm(0, 0.01)      # Antecedent ODBA * population
+    alpha ~ dnorm(0, 0.01)        # Intercept
+    beta1 ~ dnorm(0, 0.01)        # Slope effect of antecedent ODBA
+    beta2[1] <- 0                 # Set to zero effect firl level of population
+    beta3[1] <- 0                 # Set to zero effect firl level of population of antecedent PTF
+    
+    beta2[2] ~ dnorm(0, 0.01)     # Prior for effects of factor population
+    beta3[2] ~ dnorm(0, 0.01)     # Prior for effects of factor population
     
     # Dirichlet prior for daily ODBA weights
     for(j in 1:days){
@@ -39,7 +42,7 @@
     ## Likelihood
     for (i in 1:nind) {
       defer[i] ~ dbern(p[i])
-      logit(p[i]) <- beta0 + beta1*antODBA[i] + beta2*pop[i] + beta3*antODBA[i]*pop[i]
+      logit(p[i]) <- alpha + beta1*antODBA[i] + beta2[pop[i]] + beta3[pop[i]]*antODBA[i]
     }
 
     }

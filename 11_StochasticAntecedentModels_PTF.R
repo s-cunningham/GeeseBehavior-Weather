@@ -74,10 +74,13 @@ cat("
     
     ## Priors
     # Regression parameters
-    beta0 ~ dnorm(0, 0.01)      # Intercept
-    beta1 ~ dnorm(0, 0.01)      # Antecedent ODBA
-    beta2 ~ dnorm(0, 0.01)      # population
-    beta3 ~ dnorm(0, 0.01)      # Antecedent ODBA * population
+    alpha ~ dnorm(0, 0.01)        # Intercept
+    beta1 ~ dnorm(0, 0.01)        # Slope effect of antecedent PTF
+    beta2[1] <- 0                 # Set to zero effect firl level of population
+    beta3[1] <- 0                 # Set to zero effect firl level of population of antecedent PTF
+    
+    beta2[2] ~ dnorm(0, 0.01)     # Prior for effects of factor population
+    beta3[2] ~ dnorm(0, 0.01)     # Prior for effects of factor population
 
     # Dirichlet prior for daily ODBA weights
     for(j in 1:days){
@@ -110,7 +113,7 @@ cat("
     ## Likelihood
     for (i in 1:nind) {
       defer[i] ~ dbern(p[i])
-      logit(p[i]) <- beta0 + beta1*antPTF[i] + beta2*pop[i] + beta3*antPTF[i]*pop[i]
+      logit(p[i]) <- alpha + beta1*antPTF[i] + beta2[pop[i]] + beta3[pop[i]]*antPTF[i]
     }
 
     }", fill=TRUE)
@@ -120,11 +123,11 @@ sink()
 jags.data <- list(defer=response$defer, nind=nind, ptf=Y, pop=pop, days=days) 
 
 # Initial values
-inits <- function() {list(beta0=rnorm(1), beta1=rnorm(1), beta2=rnorm(1), beta3=rnorm(1), 
-                          delta=rep(1,days), alpha=runif(2, -1, 1))}
+inits <- function() {list(alpha=rnorm(1), beta1=rnorm(1), beta2=c(NA, rnorm(1)),
+                          beta3=c(NA, rnorm(1)), delta=rep(1,days))}
 
 # Parameters monitored
-params <- c("beta0", "beta1", "beta2", "beta3", "delta","antPTF",
+params <- c("alpha", "beta1", "beta2", "beta3", "antPTF", "delta",
             "weight", "antX1", "weightOrdered", "cum.weight")
 
 # MCMC settings
@@ -137,9 +140,12 @@ nc <- 3
 out <- jags(jags.data, inits, params, "R/sam_ptf.txt", n.thin=nt, n.chains=nc, n.burnin=nb, n.iter=ni, parallel=TRUE)
 
 print(out, digits=3)
-whiskerplot(out, c("beta1", "beta2", "beta3"))
 
-# traceplot(out, parameters=c("beta0", "sd.beta0"))
+# Look at traceplots
+traceplot(out, parameters=c("alpha", "beta1", "beta2", "beta3"))
+
+# Visualize effects
+whiskerplot(out, c("beta1", "beta2", "beta3"))
 
 # Save output
 smry <- as.data.frame(out$summary)
