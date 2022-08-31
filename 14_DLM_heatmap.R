@@ -169,7 +169,3 @@ ggplot(ptf, aes(x=julian, y=factor(birdno))) + geom_tile(aes(fill=ptail), colour
 
 
 
-
-
-
-
