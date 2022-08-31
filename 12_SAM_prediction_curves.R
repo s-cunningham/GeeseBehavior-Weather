@@ -57,10 +57,12 @@ dat[,16] <- scale(dat[,16])
 load("results/PTF_sam.Rdata")
 
 # Set up posterior samples
-beta0 <- c(out$samples[[1]][,1], out$samples[[2]][,1], out$samples[[3]][,1])
+alpha <- c(out$samples[[1]][,1], out$samples[[2]][,1], out$samples[[3]][,1])
 beta1 <- c(out$samples[[1]][,2], out$samples[[2]][,2], out$samples[[3]][,2])
-beta2 <- c(out$samples[[1]][,3], out$samples[[2]][,3], out$samples[[3]][,3])
-beta3 <- c(out$samples[[1]][,4], out$samples[[2]][,4], out$samples[[3]][,4])
+beta2_1 <- c(out$samples[[1]][,3], out$samples[[2]][,3], out$samples[[3]][,3])
+beta2_2 <- c(out$samples[[1]][,4], out$samples[[2]][,4], out$samples[[3]][,4])
+beta3_1 <- c(out$samples[[1]][,5], out$samples[[2]][,5], out$samples[[3]][,5])
+beta3_2 <- c(out$samples[[1]][,6], out$samples[[2]][,6], out$samples[[3]][,6])
 
 # Predict
 pred_length <- 100
@@ -71,8 +73,8 @@ nmcmc <- out$mcmc.info$n.samples
 ptf_gr <- matrix(, nmcmc, pred_length)
 ptf_mc <- matrix(, nmcmc, pred_length)
 for (i in 1:pred_length) {
-  ptf_gr[,i] <- inv.logit(beta0 + beta1*ptf_pred[i] + beta2 + beta3*ptf_pred[i])
-  ptf_mc[,i] <- inv.logit(beta0 + beta1*ptf_pred[i] )
+  ptf_mc[,i] <- inv.logit(alpha + beta1*ptf_pred[i] + beta2_1 + beta3_1*ptf_pred[i])
+  ptf_gr[,i] <- inv.logit(alpha + beta1*ptf_pred[i] + beta2_2 + beta3_2*ptf_pred[i])
 }
 
 ptf_gr_qt <- apply(ptf_gr, 2, quantile, probs=c(0.5, 0.1, 0.90))
@@ -83,20 +85,23 @@ df2 <- data.frame(y=ptf_mc_qt[1,], x=ptf_pred, up1=ptf_mc_qt[2,], lo1=ptf_mc_qt[
 
 df <- rbind(df1, df2)
 
-ggplot(df, aes(color=Population, fill=Population)) + 
+ptf_plot <- ggplot(df, aes(color=Population, fill=Population)) + 
   geom_ribbon(aes(x=x, ymin=lo1, ymax=up1), alpha=0.2, linetype="dotted") +
-  geom_line(aes(x=x, y=y), size=1) 
+  geom_line(aes(x=x, y=y), size=1) + ylab("Probability of Breeding Deferral") +
+  xlab("Scaled/Centered Proportion time feeding") + 
+  theme(legend.position="bottom")
 
 
 #### Results of PTF as covariate and plot ####
 load("results/ODBA_sam.Rdata")
 
 # Set up posterior samples
-beta0 <- c(out$samples[[1]][,1], out$samples[[2]][,1], out$samples[[3]][,1])
+alpha <- c(out$samples[[1]][,1], out$samples[[2]][,1], out$samples[[3]][,1])
 beta1 <- c(out$samples[[1]][,2], out$samples[[2]][,2], out$samples[[3]][,2])
-beta2 <- c(out$samples[[1]][,3], out$samples[[2]][,3], out$samples[[3]][,3])
-beta3 <- c(out$samples[[1]][,4], out$samples[[2]][,4], out$samples[[3]][,4])
-
+beta2_1 <- c(out$samples[[1]][,3], out$samples[[2]][,3], out$samples[[3]][,3])
+beta2_2 <- c(out$samples[[1]][,4], out$samples[[2]][,4], out$samples[[3]][,4])
+beta3_1 <- c(out$samples[[1]][,5], out$samples[[2]][,5], out$samples[[3]][,5])
+beta3_2 <- c(out$samples[[1]][,6], out$samples[[2]][,6], out$samples[[3]][,6])
 # Predict
 pred_length <- 100
 odba_pred <- seq(0.026,1.55,length.out=pred_length)
@@ -106,8 +111,8 @@ nmcmc <- out$mcmc.info$n.samples
 odba_gr <- matrix(, nmcmc, pred_length)
 odba_mc <- matrix(, nmcmc, pred_length)
 for (i in 1:pred_length) {
-  odba_gr[,i] <- inv.logit(beta0 + beta1*odba_pred[i] + beta2 + beta3*odba_pred[i])
-  odba_mc[,i] <- inv.logit(beta0 + beta1*odba_pred[i] )
+  odba_mc[,i] <- inv.logit(alpha + beta1*odba_pred[i] + beta2_1 + beta3_1*odba_pred[i])
+  odba_gr[,i] <- inv.logit(alpha + beta1*odba_pred[i] + beta2_2 + beta3_2*odba_pred[i])
 }
 
 odba_gr_qt <- apply(odba_gr, 2, quantile, probs=c(0.5, 0.1, 0.90))
@@ -118,7 +123,9 @@ df2 <- data.frame(y=odba_mc_qt[1,], x=odba_pred, up1=odba_mc_qt[2,], lo1=odba_mc
 
 df <- rbind(df1, df2)
 
-ggplot(df, aes(color=Population, fill=Population)) + 
+odba_plot <- ggplot(df, aes(color=Population, fill=Population)) + 
   geom_ribbon(aes(x=x, ymin=lo1, ymax=up1), alpha=0.2, linetype="dotted") +
-  geom_line(aes(x=x, y=y), size=1) 
+  geom_line(aes(x=x, y=y), size=1) + ylab("Probability of Breeding Deferral") +
+  xlab("Scaled/Centered ln(median daily ODBA)") + 
+  theme(legend.position="bottom")
 
