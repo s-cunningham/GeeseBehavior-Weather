@@ -50,7 +50,8 @@ prcp <- prcp[,c(1,3,19)]
 hist(prcp$prcp)
 range(prcp$prcp)
 
-prcp$prcp[prcp$prcp==-99999] <- NA
+
+prcp$prcp[prcp$date=="2013-04-06"] <-NA
 
 ### For day with missing data, subtract from the monthly value
 
