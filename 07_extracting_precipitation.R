@@ -1,7 +1,7 @@
 library(ncdf4)
 library(raster)
 library(tidyverse)
-library(forcast)
+library(forecast)
 
 # List files
 files <- list.files(path="data/gridded_precip/", pattern=".nc", all.files=TRUE, full.names=TRUE)
@@ -83,32 +83,12 @@ for (i in 1:length(missing_id)) {
     month[j,2] <- w[1,2]
     
   }
+
+  month$prcp[month$prcp<0] <- NA  
   
-  month$prcp[month$prcp<0] <- NA
-  
-  # Read in monthly file
-  m <- brick("data/gridded_precip/monthly/gpcp_v02r03_monthly_d201304_c20170616.nc")
-  
-  # Extract from raster
-  w <- raster::extract(m, spdf, method='bilinear', fun='mean', df=TRUE)
-  
-  
+  prcp$prcp[prcp$animal_id==missing_id[i] & is.na(prcp$prcp)] <- na.interp(month$prcp)[6]
   
 }
-
-
-
-
-plot(b)
-points(temp$longitude, temp$latitude, pch=16)
-unique(b)
-
-
-
-
-
-
-
 
 # Write data
 write_csv(prcp, "files_for_models/daily_precip.csv")
