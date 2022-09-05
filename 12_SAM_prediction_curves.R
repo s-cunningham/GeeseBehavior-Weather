@@ -150,7 +150,7 @@ odba_plot <- ggplot(df, aes(color=Population, fill=Population)) +
         panel.border=element_rect(color="black", fill=NA, size=0.5))
 
 ## Plot
-odba_plot + ptf_plot
+odba_plot | ptf_plot
 
 
 #### Plotting (cumulative and daily) weights ####
