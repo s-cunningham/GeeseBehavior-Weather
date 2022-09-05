@@ -203,7 +203,7 @@ acc <- acc[acc$tag!="EOBS",]
 
 # Add new column
 acc$defer <- 0
-acc$defer[acc$animal_id=="17766" | acc$animal_id=="17769" | acc$animal_id=="17814" |
+acc$defer[acc$animal_id=="17769" | acc$animal_id=="17814" |
             acc$animal_id=="RP23F" | acc$animal_id=="LM39F" | acc$animal_id=="RP19F" |
             acc$animal_id=="RP20F" | acc$animal_id=="17812"] <- 1
 
