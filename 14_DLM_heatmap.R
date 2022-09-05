@@ -205,7 +205,8 @@ p2 <- ggplot(ptf, aes(x=julian, y=factor(birdno))) + geom_tile(aes(fill=ptail), 
         axis.title.x=element_text(size=10, face="bold"),
         strip.text.x=element_blank())
 
-p1 / p2
+patchwork <- p1 / p2
+patchwork + plot_annotation(tag_levels="a", tag_prefix="(", tag_suffix=")") 
 
 
 
