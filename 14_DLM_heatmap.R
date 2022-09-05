@@ -1,6 +1,7 @@
 ## 2022-08-30
 
 library(tidyverse)
+library(patchwork)
 
 options(scipen=999, digits=3)
 
@@ -136,14 +137,14 @@ ggplot(odba, aes(x=julian, y=factor(birdno))) + geom_tile(aes(fill=ptail), colou
   guides(fill=guide_colourbar(title="Proportion\nSamples >0")) +
   theme(legend.justification=c(0,0),
         legend.position=c(0,0.01), 
-        legend.title=element_text(size=15, face="bold"), 
-        legend.text=element_text(size=13), 
+        legend.title=element_text(size=12, face="bold"), 
+        legend.text=element_text(size=10), 
         legend.background=element_rect(fill=NA),
         panel.border=element_rect(color="black", fill=NA, size=0.5),
-        axis.text=element_text(size=11), 
+        axis.text=element_text(size=10), 
         axis.title.y=element_blank(),
-        axis.title.x=element_text(size=14, face="bold"),
-        strip.text.x=element_text(size=14, face="bold"),
+        axis.title.x=element_text(size=12, face="bold"),
+        strip.text.x=element_text(size=12, face="bold"),
         strip.background=element_rect(fill="white"))
   
   
@@ -156,16 +157,55 @@ ggplot(ptf, aes(x=julian, y=factor(birdno))) + geom_tile(aes(fill=ptail), colour
   guides(fill=guide_colourbar(title="Proportion\nSamples >0")) +
   theme(legend.justification=c(0,0),
         legend.position=c(0,0.01), 
-        legend.title=element_text(size=15, face="bold"), 
-        legend.text=element_text(size=13), 
+        legend.title=element_text(size=12, face="bold"), 
+        legend.text=element_text(size=10), 
         legend.background=element_rect(fill=NA),
         panel.border=element_rect(color="black", fill=NA, size=0.5),
-        axis.text=element_text(size=11), 
+        axis.text=element_text(size=10), 
         axis.title.y=element_blank(),
-        axis.title.x=element_text(size=14, face="bold"),
-        strip.text.x=element_text(size=14, face="bold"),
+        axis.title.x=element_text(size=12, face="bold"),
+        strip.text.x=element_text(size=12, face="bold"),
         strip.background=element_rect(fill="white"))
 
+
+## Combine into a single plot
+p1 <- ggplot(odba, aes(x=julian, y=factor(birdno))) + geom_tile(aes(fill=ptail), colour = "black") + 
+  scale_fill_gradientn(limits=c(0,1), colors=colors[c(1, seq_along(colors), length(colors))],
+                       values=c(scales::rescale(color_breaks, from=c(0,1)))) +
+  xlab("Date") +
+  scale_x_continuous(breaks=c(30,60,90,120,150), labels=c("30-Jan","01-Mar","30-Mar","30-Apr","30-May")) +
+  facet_grid(.~covariate, labeller=as_labeller(var_names)) + 
+  guides(fill=guide_colourbar(title="Proportion\nSamples >0")) +
+  theme(legend.position="none",
+        panel.border=element_rect(color="black", fill=NA, size=0.5),
+        axis.text.y=element_text(size=8), 
+        axis.text.x=element_blank(), 
+        axis.title.y=element_blank(),
+        axis.title.x=element_blank(),
+        strip.text.x=element_text(size=10, face="bold"),
+        strip.background=element_rect(fill="white"))
+
+
+p2 <- ggplot(ptf, aes(x=julian, y=factor(birdno))) + geom_tile(aes(fill=ptail), colour = "black") + 
+  scale_fill_gradientn(limits=c(0,1), colors=colors[c(1, seq_along(colors), length(colors))],
+                       values=c(scales::rescale(color_breaks, from=c(0,1)))) +
+  xlab("Date") +
+  scale_x_continuous(breaks=c(30,60,90,120,150), labels=c("30-Jan","01-Mar","30-Mar","30-Apr","30-May")) +
+  facet_grid(.~covariate, labeller=as_labeller(var_names)) + 
+  guides(fill=guide_colourbar(title="Proportion\nSamples >0")) +
+  theme(legend.justification=c(0,0),
+        legend.position=c(0,0.01), 
+        legend.title=element_text(size=10, face="bold"), 
+        legend.text=element_text(size=10), 
+        legend.background=element_rect(fill=NA),
+        panel.border=element_rect(color="black", fill=NA, size=0.5),
+        axis.text.x=element_text(size=10), 
+        axis.text.y=element_text(size=8), 
+        axis.title.y=element_blank(),
+        axis.title.x=element_text(size=10, face="bold"),
+        strip.text.x=element_blank())
+
+p1 / p2
 
 
 
