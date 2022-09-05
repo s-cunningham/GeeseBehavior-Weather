@@ -1,9 +1,11 @@
 # folders
 data/
 output/
-doc/
 dlmODBA/
 dlmPTF
+
+# Non-csv excel files
+.xlsx
 
 # History files
 .Rhistory
