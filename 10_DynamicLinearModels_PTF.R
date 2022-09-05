@@ -87,10 +87,10 @@ cat("
     mu1 ~ dnorm(0, 1/2.25)          # beta1[1]
     mu2 ~ dnorm(0, 1/2.25)          # beta2[1]
     
-    eta.p1 ~ dgamma(0.001, 0.001) # Process variance for covariate 1
+    eta.p1 ~ dgamma(0.1, 1) # Process variance for covariate 1
     sd.q1 <- 1/sqrt(eta.p1)
     
-    eta.p2 ~ dgamma(0.001, 0.001) # Process variance for covariate 1
+    eta.p2 ~ dgamma(0.1, 1) # Process variance for covariate 1
     sd.q2 <- 1/sqrt(eta.p2)
 
     # Initialize (fill in first value)
