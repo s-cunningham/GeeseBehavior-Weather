@@ -178,11 +178,7 @@ p1 <- ggplot(odba, aes(x=julian, y=factor(birdno))) + geom_tile(aes(fill=ptail),
   guides(fill=guide_colourbar(title="Proportion\nSamples >0")) +
   theme(legend.position="none",
         panel.border=element_rect(color="black", fill=NA, size=0.5),
-<<<<<<< HEAD
         axis.text.y=element_text(size=8), 
-=======
-        axis.text.y=element_text(size=10), 
->>>>>>> f8ddb1cc58fdd43eb37222cf2e2863bb4449c105
         axis.text.x=element_blank(), 
         axis.title.y=element_blank(),
         axis.title.x=element_blank(),
@@ -203,12 +199,8 @@ p2 <- ggplot(ptf, aes(x=julian, y=factor(birdno))) + geom_tile(aes(fill=ptail), 
         legend.text=element_text(size=10), 
         legend.background=element_rect(fill=NA),
         panel.border=element_rect(color="black", fill=NA, size=0.5),
-<<<<<<< HEAD
         axis.text.x=element_text(size=10), 
         axis.text.y=element_text(size=8), 
-=======
-        axis.text=element_text(size=10), 
->>>>>>> f8ddb1cc58fdd43eb37222cf2e2863bb4449c105
         axis.title.y=element_blank(),
         axis.title.x=element_text(size=10, face="bold"),
         strip.text.x=element_blank())
