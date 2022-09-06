@@ -87,7 +87,9 @@ ggplot(dat, aes(x=julian, y=values, group=animal_id, color=factor(year))) +
         strip.text=element_text(size=13, face="bold"),
         strip.background=element_rect(fill="white"))
 
+# Weather summary states
 
+dat %>% group_by(pop, variable) %>% summarize(range(values))
 
 
 
