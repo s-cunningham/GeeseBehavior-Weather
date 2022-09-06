@@ -169,9 +169,20 @@ ggplot(ptf, aes(x=julian, y=factor(birdno))) + geom_tile(aes(fill=ptail), colour
 
 
 ## Combine into a single plot
-p1 <- ggplot(odba, aes(x=julian, y=factor(birdno))) + geom_tile(aes(fill=ptail), colour = "black") + 
+# Read in data for attempt/defer
+defer <- read_csv("files_for_models/attempt_defer_collars.csv")
+ids <- distinct(odba[,c(1,20)])
+defer <- left_join(defer, ids, by="animal_id")
+defer$defer[defer$defer==1] <- "defer"
+defer$defer[defer$defer==0] <- "attempt"
+defer$defer[is.na(defer$defer)] <- "attempt"
+
+
+p1 <- ggplot(odba, aes(x=julian, y=factor(birdno))) + 
+  geom_tile(aes(fill=ptail), colour = "black") + 
   scale_fill_gradientn(limits=c(0,1), colors=colors[c(1, seq_along(colors), length(colors))],
                        values=c(scales::rescale(color_breaks, from=c(0,1)))) +
+  geom_point(aes(x=155, y=unique(odba$birdno)))
   xlab("Date") +
   scale_x_continuous(breaks=c(30,60,90,120,150), labels=c("30-Jan","01-Mar","30-Mar","30-Apr","30-May")) +
   facet_grid(.~covariate, labeller=as_labeller(var_names)) + 
