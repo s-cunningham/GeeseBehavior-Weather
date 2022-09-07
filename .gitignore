@@ -2,7 +2,8 @@
 data/
 output/
 dlmODBA/
-dlmPTF
+dlmPTF/
+doc/
 
 # Non-csv excel files
 .xlsx
