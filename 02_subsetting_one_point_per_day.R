@@ -1,13 +1,6 @@
-#**********************************************************************************************************************************
-#**********************************************************************************************************************************
 
-# Project: Objective 1
-# Date: March 2019
 # Author: Stephanie Cunningham
-# Description: Filtering GPS data to 1 point per day
-
-#**********************************************************************************************************************************
-#**********************************************************************************************************************************
+# Filtering GPS data to 1 point per day
 
 
 library(tidyverse)
@@ -16,6 +9,7 @@ library(tidyverse)
 tags <- read.csv("data/combined_NA_gps.csv", stringsAsFactors=FALSE)
 tags <- tags[,-c(1)]
 
+tags$date <- as.Date(tags$date, format="%m/%d/%Y")
 tags$timestamp <- as.POSIXct(tags$timestamp, tz="GMT")
 
 tags$tt <- "21:00:00"
