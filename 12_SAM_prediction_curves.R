@@ -141,7 +141,7 @@ odba_plot <- ggplot(df, aes(color=Population, fill=Population)) +
   scale_color_manual(values=c("#2166ac","#b2182b")) +
   scale_fill_manual(values=c("#2166ac","#b2182b")) +
   xlab("Antecedent ODBA") + 
-  theme(legend.position=c(0,0), legend.justification=c(0,0),
+  theme(legend.position=c(0,1), legend.justification=c(0,1),
         legend.title=element_text(size=12, face="bold"), 
         legend.text=element_text(size=11), 
         legend.background=element_rect(fill=NA),
