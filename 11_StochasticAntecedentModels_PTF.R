@@ -74,13 +74,13 @@ cat("
     
     ## Priors
     # Regression parameters
-    alpha ~ dnorm(0, 0.01)        # Intercept
-    beta1 ~ dnorm(0, 0.01)        # Slope effect of antecedent PTF
+    alpha ~ dnorm(0, 1/2.25)        # Intercept
+    beta1 ~ dnorm(0, 1/2.25)        # Slope effect of antecedent PTF
     beta2[1] <- 0                 # Set to zero effect firl level of population
     beta3[1] <- 0                 # Set to zero effect firl level of population of antecedent PTF
     
-    beta2[2] ~ dnorm(0, 0.01)     # Prior for effects of factor population
-    beta3[2] ~ dnorm(0, 0.01)     # Prior for effects of factor population
+    beta2[2] ~ dnorm(0, 1/2.25)     # Prior for effects of factor population
+    beta3[2] ~ dnorm(0, 1/2.25)     # Prior for effects of factor population
 
     # Dirichlet prior for daily ODBA weights
     for(j in 1:days){

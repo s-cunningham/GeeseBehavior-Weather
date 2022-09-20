@@ -91,7 +91,7 @@ cat("
     eta.p2 ~ dgamma(0.1, 1) # Process variance for covariate 1
     sd.q2 <- 1/sqrt(eta.p2)
     
-    tau.o ~ dgamma(0.001, 0.001)
+    tau.o ~ dgamma(0.1, 1)
     sd.r <- 1/sqrt(tau.o)
     
     # Initialize (fill in first value)
