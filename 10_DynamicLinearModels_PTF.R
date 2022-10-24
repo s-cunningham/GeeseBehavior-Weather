@@ -100,19 +100,19 @@ cat("
     predY[1] <- ilogit(beta0 + beta1[1]*prcp[1] + beta2[1]*temp[1])
     y[1] ~ dbinom(predY[1], n[1])
 
-    # Likelihood
-    for (i in 2:dur) {
+    # Likelihood (loop over days)
+    for (t in 2:dur) {
 
       # Process model
-      predX1[i] <- 1*beta1[i-1]
-      beta1[i] ~ dnorm(predX1[i], eta.p1)	# coefficients for precipitation rate
+      predX1[t] <- 1*beta1[t-1]
+      beta1[t] ~ dnorm(predX1[t], eta.p1)	# coefficients for precipitation rate
 
-      predX2[i] <- 1*beta2[i-1]
-      beta2[i] ~ dnorm(predX2[i], eta.p2)	# coefficiencts for temperature
+      predX2[t] <- 1*beta2[t-1]
+      beta2[t] ~ dnorm(predX2[t], eta.p2)	# coefficiencts for temperature
 
       # Observation model
-      predY[i] <- ilogit(beta0 + beta1[i]*prcp[i] + beta2[i]*temp[i])
-      y[i] ~ dbinom(predY[i], n[i])	      # Observation variation
+      predY[t] <- ilogit(beta0 + beta1[t]*prcp[t] + beta2[t]*temp[t])
+      y[t] ~ dbinom(predY[t], n[t])	      # Observation variation
     }
     
     }", fill=TRUE)

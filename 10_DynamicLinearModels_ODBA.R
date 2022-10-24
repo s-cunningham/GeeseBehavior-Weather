@@ -101,19 +101,19 @@ cat("
     predY[1] <- beta0 + beta1[1]*prcp[1] + beta2[1]*temp[1]
     y[1] ~ dnorm(predY[1], tau.o)
 
-    # Likelihood
-    for (i in 2:dur) {
+    # Likelihood (loop over each day)
+    for (t in 2:dur) {
 
       # Process model
-      predX1[i] <- 1*beta1[i-1]
-      beta1[i] ~ dnorm(predX1[i], eta.p1)	# coefficients for precipitation rate
+      predX1[t] <- 1*beta1[t-1]
+      beta1[t] ~ dnorm(predX1[t], eta.p1)	# coefficients for precipitation rate
 
-      predX2[i] <- 1*beta2[i-1]
-      beta2[i] ~ dnorm(predX2[i], eta.p2)	# coefficiencts for temperature
+      predX2[t] <- 1*beta2[t-1]
+      beta2[t] ~ dnorm(predX2[t], eta.p2)	# coefficiencts for temperature
 
       # Observation model
-      predY[i] <- beta0 + beta1[i]*prcp[i] + beta2[i]*temp[i]
-      y[i] ~ dnorm(predY[i], tau.o)	      # Observation variation
+      predY[t] <- beta0 + beta1[t]*prcp[t] + beta2[t]*temp[t]
+      y[t] ~ dnorm(predY[t], tau.o)	      # Observation variation
     }
     
     }", fill=TRUE)
