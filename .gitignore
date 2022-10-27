@@ -8,6 +8,9 @@ doc/
 # Non-csv excel files
 .xlsx
 
+# docx files
+.docx
+
 # History files
 .Rhistory
 .Rapp.history
