@@ -95,6 +95,7 @@ for (i in 1:length(un.id)) {
   
   if (wint > 14) {
     pts_stage <- pts_stage[pts_stage$julian>=(lwint-14),]
+    print(un.id[i])
   }
   
   # start date
