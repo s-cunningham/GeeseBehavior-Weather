@@ -45,7 +45,8 @@ precip <- read_csv("files_for_models/daily_precip.csv")
 wdat <- left_join(precip, wdat, by=c("animal_id", "date"))
 
 # save precipitation and weather data
-write_csv(wdat, "files_for_models/weather_covars.csv")
+# write_csv(wdat, "files_for_models/weather_covars.csv")
+wdat <- read_csv("files_for_models/weather_covars.csv")
 
 ## Check correlation between minimum temperature and precipitation
 cor.test(wdat$prcp, wdat$mintemp, alternative="two.sided", method="pearson", conf.level=0.95)
