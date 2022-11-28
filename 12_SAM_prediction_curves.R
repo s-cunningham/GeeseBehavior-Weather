@@ -96,12 +96,14 @@ ptf_plot <- ggplot(df, aes(color=Population, fill=Population)) +
   scale_color_manual(values=c("#2166ac","#b2182b")) +
   scale_fill_manual(values=c("#2166ac","#b2182b")) +
   xlab("Antecedent PTF") + 
-  theme(legend.position="none",
+  theme(legend.position="bottom",
+        legend.title=element_text(size=12, face="bold"), 
+        legend.text=element_text(size=11), 
+        legend.background=element_rect(fill=NA),
         axis.text.x=element_text(size=12),
         axis.text.y=element_blank(),
         axis.title.x=element_text(size=12, face="bold"),
-        axis.title.y=element_blank(),
-        panel.border=element_rect(color="black", fill=NA, size=0.5))
+        axis.title.y=element_blank())
 
 
 #### Results of ODBA as covariate and plot ####
@@ -141,17 +143,18 @@ odba_plot <- ggplot(df, aes(color=Population, fill=Population)) +
   scale_color_manual(values=c("#2166ac","#b2182b")) +
   scale_fill_manual(values=c("#2166ac","#b2182b")) +
   xlab("Antecedent ODBA") + 
-  theme(legend.position=c(0,1), legend.justification=c(0,1),
+  theme(legend.position="bottom",
         legend.title=element_text(size=12, face="bold"), 
         legend.text=element_text(size=11), 
         legend.background=element_rect(fill=NA),
         axis.text=element_text(size=12),
-        axis.title=element_text(size=12, face="bold"),
-        panel.border=element_rect(color="black", fill=NA, size=0.5))
+        axis.title=element_text(size=12, face="bold"))
 
 ## Plot
-odba_plot | ptf_plot
 
+(odba_plot + ptf_plot + plot_layout(guides="collect")) + 
+  plot_annotation(tag_levels="a", tag_prefix="(", tag_suffix=")") & 
+  theme(legend.position = 'bottom')
 
 #### Plotting (cumulative and daily) weights ####
 
