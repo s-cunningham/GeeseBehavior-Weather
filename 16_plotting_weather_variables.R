@@ -2,6 +2,7 @@
 ## 2022-08-31
 
 library(tidyverse)
+library(patchwork)
 
 options(scipen=999, digits=3)
 
@@ -56,38 +57,69 @@ dat$lnODBAmedian <- log(dat$median.odba)
 # Reorganize columns
 dat <- dat[,c(1,3,4,23,24,5:8,10,11,16,18,19,21)]
 
+# Weather summary states
+dat %>% group_by(pop, variable) %>% summarize(range(values))
+
 #### Plot weather variables ####
 
 dat <- pivot_longer(dat, 14:15, names_to="variable", values_to="values") %>% as.data.frame()
 
+prcp <- dat %>% filter(variable=="prcp")
+temp <- dat %>% filter(variable=="mintemp")
 
-# Facet names
-var_names <- c(prcp="Precipitation\n(mm)",
-               mintemp="Minimum\nTemperature (C)",
-               GRLD="Greenland", 
-               NAMC="Midcontinent")
+dat_text <- data.frame(
+  label = c("2012", "2013", "2017", "2018"),
+  year=c(2012,2013,2017,2018)
+)
 
-ggplot(dat, aes(x=julian, y=values, group=animal_id, color=factor(year))) + 
-  geom_line(alpha=0.5, size=1) +
-  scale_x_continuous(breaks=c(46,60,74,90,105,120,135), 
-                     labels=c("15-Feb","1-Mar","15-Mar","30-Mar","15-Apr","30-Apr","15-May")) +
-  scale_color_manual(values=c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c")) +
-  facet_grid(variable~pop, scales="free",labeller=as_labeller(var_names)) +
-  xlab("Date") +
-  guides(color=guide_legend(title="Year")) +
+# Plot precipitation
+prcp_plot <- ggplot() + 
+              geom_line(data=prcp, aes(x=julian, y=values, group=animal_id, color=pop), alpha=0.5, size=1) +
+              scale_x_continuous(breaks=c(60,91,121,152), 
+                                 labels=c("1-Mar","1-Apr","1-May","1-Jun")) +
+              scale_color_manual(values=c("#2166ac","#b2182b")) +
+              facet_grid(.~year, scales="free_x") +
+              xlab("Date") + ylab("Precipitation (mm)") +
+              guides(color=guide_legend(title="Population")) +
+              geom_text(data=dat_text, mapping=aes(x=-Inf, y=-Inf, label=label), hjust=-0.45, vjust=-11) +
+              annotate("segment", x=-Inf, xend=Inf, y=-Inf, yend=-Inf)+
+              annotate("segment", x=-Inf, xend=-Inf, y=-Inf, yend=Inf) +
+              theme(legend.position='bottom', 
+                    legend.title=element_text(size=13), 
+                    legend.text=element_text(size=12), 
+                    legend.background=element_rect(fill=NA),
+                    panel.border=element_blank(),
+                    axis.line=element_line(),
+                    axis.text.y=element_text(size=12), 
+                    axis.text.x=element_blank(),
+                    axis.title.y=element_text(size=13),
+                    axis.title.x=element_blank(),
+                    strip.text=element_blank(),
+                    strip.background=element_rect(fill="white"))
+
+temp_plot <- ggplot() + 
+  geom_line(data=temp, aes(x=julian, y=values, group=animal_id, color=pop), alpha=0.5, size=1) +
+  scale_x_continuous(breaks=c(60,91,121,152), 
+                     labels=c("1-Mar","1-Apr","1-May","1-Jun")) +
+  scale_color_manual(values=c("#2166ac","#b2182b")) +
+  facet_grid(.~year, scales="free_x") +
+  xlab("Date") + ylab("Temperature (C)") +
+  guides(color=guide_legend(title="Population")) +
+  annotate("segment", x=-Inf, xend=Inf, y=-Inf, yend=-Inf)+
+  annotate("segment", x=-Inf, xend=-Inf, y=-Inf, yend=Inf) +
   theme(legend.position='bottom', 
-        legend.title=element_text(size=13, face="bold"), 
-        legend.text=element_text(size=11), 
+        legend.title=element_text(size=13), 
+        legend.text=element_text(size=12), 
         legend.background=element_rect(fill=NA),
+        panel.border=element_blank(),
+        axis.line=element_line(),
         axis.text=element_text(size=12), 
-        axis.title.y=element_blank(),
-        axis.title.x=element_text(size=13, face="bold"),
-        strip.text=element_text(size=13, face="bold"),
+        axis.title=element_text(size=13),
+        strip.text=element_blank(),
         strip.background=element_rect(fill="white"))
 
-# Weather summary states
-dat %>% group_by(pop, variable) %>% summarize(range(values))
 
-
-
+(prcp_plot / temp_plot + plot_layout(guides="collect")) + 
+  plot_annotation(tag_levels="a", tag_prefix="(", tag_suffix=")") & 
+  theme(legend.position = 'bottom')
 
