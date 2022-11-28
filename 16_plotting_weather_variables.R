@@ -75,12 +75,10 @@ ggplot(dat, aes(x=julian, y=values, group=animal_id, color=factor(year))) +
   facet_grid(variable~pop, scales="free",labeller=as_labeller(var_names)) +
   xlab("Date") +
   guides(color=guide_legend(title="Year")) +
-  theme(legend.justification=c(0,1),
-        legend.position=c(0,0.5), 
+  theme(legend.position='bottom', 
         legend.title=element_text(size=13, face="bold"), 
         legend.text=element_text(size=11), 
         legend.background=element_rect(fill=NA),
-        panel.border=element_rect(color="black", fill=NA, size=0.5),
         axis.text=element_text(size=12), 
         axis.title.y=element_blank(),
         axis.title.x=element_text(size=13, face="bold"),
@@ -88,7 +86,6 @@ ggplot(dat, aes(x=julian, y=values, group=animal_id, color=factor(year))) +
         strip.background=element_rect(fill="white"))
 
 # Weather summary states
-
 dat %>% group_by(pop, variable) %>% summarize(range(values))
 
 
