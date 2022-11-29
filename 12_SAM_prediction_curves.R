@@ -139,7 +139,7 @@ df <- rbind(df1, df2)
 
 odba_plot <- ggplot(df, aes(color=Population, fill=Population)) + 
   geom_ribbon(aes(x=x, ymin=lo1, ymax=up1), alpha=0.2, linetype="dotted") +
-  geom_line(aes(x=x, y=y), size=1) + ylab("Probability of Breeding Deferral") +
+  geom_line(aes(x=x, y=y), size=1) + ylab("Probability of breeding deferral") +
   scale_color_manual(values=c("#2166ac","#b2182b")) +
   scale_fill_manual(values=c("#2166ac","#b2182b")) +
   xlab("Antecedent ODBA") + 
