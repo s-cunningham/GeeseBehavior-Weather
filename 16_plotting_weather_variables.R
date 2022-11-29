@@ -58,7 +58,7 @@ dat$lnODBAmedian <- log(dat$median.odba)
 dat <- dat[,c(1,3,4,23,24,5:8,10,11,16,18,19,21)]
 
 # Weather summary states
-dat %>% group_by(pop, variable) %>% summarize(range(values))
+# dat %>% group_by(pop, variable) %>% summarize(range(values))
 
 #### Plot weather variables ####
 
@@ -67,54 +67,48 @@ dat <- pivot_longer(dat, 14:15, names_to="variable", values_to="values") %>% as.
 prcp <- dat %>% filter(variable=="prcp")
 temp <- dat %>% filter(variable=="mintemp")
 
-dat_text <- data.frame(
-  label = c("2012", "2013", "2017", "2018"),
-  year=c(2012,2013,2017,2018)
-)
-
 # Plot precipitation
 prcp_plot <- ggplot() + 
               geom_line(data=prcp, aes(x=julian, y=values, group=animal_id, color=pop), alpha=0.5, size=1) +
               scale_x_continuous(breaks=c(60,91,121,152), 
                                  labels=c("1-Mar","1-Apr","1-May","1-Jun")) +
-              scale_color_manual(values=c("#2166ac","#b2182b")) +
+              scale_color_manual(values=c("#2166ac","#b2182b"), labels=c("Greenland", "Midcontinent")) +
               facet_grid(.~year, scales="free_x") +
               xlab("Date") + ylab("Precipitation (mm)") +
               guides(color=guide_legend(title="Population")) +
-              geom_text(data=dat_text, mapping=aes(x=-Inf, y=-Inf, label=label), hjust=-0.45, vjust=-11) +
               annotate("segment", x=-Inf, xend=Inf, y=-Inf, yend=-Inf)+
               annotate("segment", x=-Inf, xend=-Inf, y=-Inf, yend=Inf) +
               theme(legend.position='bottom', 
-                    legend.title=element_text(size=13), 
+                    legend.title=element_text(size=12), 
                     legend.text=element_text(size=12), 
                     legend.background=element_rect(fill=NA),
                     panel.border=element_blank(),
                     axis.line=element_line(),
                     axis.text.y=element_text(size=12), 
                     axis.text.x=element_blank(),
-                    axis.title.y=element_text(size=13),
+                    axis.title.y=element_text(size=12),
                     axis.title.x=element_blank(),
-                    strip.text=element_blank(),
-                    strip.background=element_rect(fill="white"))
+                    strip.text=element_text(size=12),
+                    strip.background=element_rect(fill="white", color=NA))
 
 temp_plot <- ggplot() + 
   geom_line(data=temp, aes(x=julian, y=values, group=animal_id, color=pop), alpha=0.5, size=1) +
   scale_x_continuous(breaks=c(60,91,121,152), 
                      labels=c("1-Mar","1-Apr","1-May","1-Jun")) +
-  scale_color_manual(values=c("#2166ac","#b2182b")) +
+  scale_color_manual(values=c("#2166ac","#b2182b"), labels=c("Greenland", "Midcontinent")) +
   facet_grid(.~year, scales="free_x") +
   xlab("Date") + ylab("Temperature (C)") +
   guides(color=guide_legend(title="Population")) +
   annotate("segment", x=-Inf, xend=Inf, y=-Inf, yend=-Inf)+
   annotate("segment", x=-Inf, xend=-Inf, y=-Inf, yend=Inf) +
   theme(legend.position='bottom', 
-        legend.title=element_text(size=13), 
+        legend.title=element_text(size=12), 
         legend.text=element_text(size=12), 
         legend.background=element_rect(fill=NA),
         panel.border=element_blank(),
         axis.line=element_line(),
         axis.text=element_text(size=12), 
-        axis.title=element_text(size=13),
+        axis.title=element_text(size=12),
         strip.text=element_blank(),
         strip.background=element_rect(fill="white"))
 
