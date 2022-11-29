@@ -187,15 +187,16 @@ p1 <- ggplot(odba, aes(x=julian, y=factor(birdno))) +
   xlab("Date") +
   scale_x_continuous(breaks=c(30,60,90,120,150), labels=c("30-Jan","01-Mar","30-Mar","30-Apr","30-May")) +
   facet_grid(.~covariate, labeller=as_labeller(var_names)) + 
-  guides(fill=guide_colourbar(title="Proportion\nSamples >0")) +
+  guides(fill=guide_colourbar(title="Proportion\nsamples >0")) +
+  annotate("segment", x=-Inf, xend=Inf, y=-Inf, yend=-Inf)+
+  annotate("segment", x=-Inf, xend=-Inf, y=-Inf, yend=Inf) +
   theme(legend.position="none",
-        panel.border=element_rect(color="black", fill=NA, size=0.5),
         axis.text.y=element_text(size=8), 
         axis.text.x=element_blank(), 
         axis.title.y=element_blank(),
         axis.title.x=element_blank(),
-        strip.text.x=element_text(size=10, face="bold"),
-        strip.background=element_rect(fill="white"))
+        strip.text.x=element_text(size=12),
+        strip.background=element_rect(fill="white", color=NA))
 
 
 p2 <- ggplot(ptf, aes(x=julian, y=factor(birdno))) + geom_tile(aes(fill=ptail), colour = "black") + 
@@ -206,21 +207,22 @@ p2 <- ggplot(ptf, aes(x=julian, y=factor(birdno))) + geom_tile(aes(fill=ptail), 
   xlab("Date") +
   scale_x_continuous(breaks=c(30,60,90,120,150), labels=c("30-Jan","01-Mar","30-Mar","30-Apr","30-May")) +
   facet_grid(.~covariate, labeller=as_labeller(var_names)) + 
-  guides(fill=guide_colourbar(title="Proportion\nSamples >0")) +
+  guides(fill=guide_colourbar(title="Proportion\nsamples >0")) +
+  annotate("segment", x=-Inf, xend=Inf, y=-Inf, yend=-Inf)+
+  annotate("segment", x=-Inf, xend=-Inf, y=-Inf, yend=Inf) +
   theme(legend.justification=c(0,0),
-        legend.position=c(0,0.01), 
-        legend.title=element_text(size=10, face="bold"), 
-        legend.text=element_text(size=10), 
+        legend.position=c(0,0.01),
+        legend.title=element_text(size=12), 
+        legend.text=element_text(size=12), 
         legend.background=element_rect(fill=NA),
-        panel.border=element_rect(color="black", fill=NA, size=0.5),
-        axis.text.x=element_text(size=10), 
+        axis.text.x=element_text(size=12), 
         axis.text.y=element_text(size=8), 
         axis.title.y=element_blank(),
-        axis.title.x=element_text(size=10, face="bold"),
+        axis.title.x=element_text(size=12),
         strip.text.x=element_blank())
 
-patchwork <- p1 / p2
-patchwork + plot_annotation(tag_levels="a", tag_prefix="(", tag_suffix=")") 
+# patchwork <- p1 / p2
+# patchwork + plot_annotation(tag_levels="a", tag_prefix="(", tag_suffix=")")
 
-
+(p1 / p2) + plot_annotation(tag_levels="a", tag_prefix="(", tag_suffix=")")
 
