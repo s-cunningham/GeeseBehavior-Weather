@@ -97,12 +97,12 @@ ptf_plot <- ggplot(df, aes(color=Population, fill=Population)) +
   scale_fill_manual(values=c("#2166ac","#b2182b")) +
   xlab("Antecedent PTF") + 
   theme(legend.position="bottom",
-        legend.title=element_text(size=12, face="bold"), 
-        legend.text=element_text(size=11), 
+        legend.title=element_text(size=12), 
+        legend.text=element_text(size=12), 
         legend.background=element_rect(fill=NA),
         axis.text.x=element_text(size=12),
         axis.text.y=element_blank(),
-        axis.title.x=element_text(size=12, face="bold"),
+        axis.title.x=element_text(size=12),
         axis.title.y=element_blank())
 
 
@@ -144,11 +144,11 @@ odba_plot <- ggplot(df, aes(color=Population, fill=Population)) +
   scale_fill_manual(values=c("#2166ac","#b2182b")) +
   xlab("Antecedent ODBA") + 
   theme(legend.position="bottom",
-        legend.title=element_text(size=12, face="bold"), 
-        legend.text=element_text(size=11), 
+        legend.title=element_text(size=12), 
+        legend.text=element_text(size=12), 
         legend.background=element_rect(fill=NA),
         axis.text=element_text(size=12),
-        axis.title=element_text(size=12, face="bold"))
+        axis.title=element_text(size=12))
 
 ## Plot
 
