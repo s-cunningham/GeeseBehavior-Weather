@@ -4,6 +4,7 @@ library(rworldmap)
 library(sp)
 library(rgdal)
 library(ggspatial)
+library(patchwork)
 
 # Import polygons 
 world <- readOGR("data/shapefiles", "ne_50m_land") 
@@ -68,6 +69,8 @@ apr30 %>% group_by(pop) %>% summarize(mean(latitude))
 #   annotate("text", x=3050000, y=4800000, label="Projection: Azimuthal Equidistant")
 
 
+dat <- dat %>% filter(julian<152)
+
 # Plot latitude by julian day
 inset <- ggplotGrob(ggplot(dat) + geom_line(aes(x=julian, y=latitude, color=pop, group=animal_id), size=1) + 
   theme_classic() +
@@ -76,7 +79,7 @@ inset <- ggplotGrob(ggplot(dat) + geom_line(aes(x=julian, y=latitude, color=pop,
     scale_x_continuous(breaks=c(30,60,90,120,150), labels=c("30-Jan","01-Mar","30-Mar",
                                                                "30-Apr","30-May")) +
   theme(panel.border=element_rect(color="black", fill=NA, size=0.5),
-        axis.text=element_text(size=12), axis.title=element_text(size=14, face="bold"),
+        axis.text=element_text(size=12), axis.title=element_text(size=12),
         # legend.justification=c(1,0), legend.position=c(1,0), legend.text=element_text(size=14), 
         # legend.title=element_text(size=16, face="bold"), 
         # legend.background=element_rect(fill="white", colour="black")
@@ -91,14 +94,51 @@ ggplot() + geom_path(data = grid_df, aes(x = long, y = lat, group = group), colo
   scale_color_manual(values=c("#2166ac", "#b2182b")) +
   theme_classic() + theme(axis.title.x=element_blank(), axis.text=element_blank(), axis.ticks=element_blank(),
                           axis.title.y=element_blank(), panel.border=element_rect(color="black", fill=NA, size=0.5),
-                          legend.justification=c(1,1), legend.position=c(1,1), legend.text=element_text(size=14),
-                          legend.title=element_text(size=16, face="bold"),
+                          legend.justification=c(1,1), legend.position=c(1,1), legend.text=element_text(size=12),
+                          legend.title=element_text(size=12),
                           legend.background=element_rect(fill="white", colour="black")) +
   guides(fill=guide_legend(title="Population"), color=guide_legend(title="Population")) +
-  annotation_scale(location="bl", text_cex=1.4, style="bar") +
-  annotate("label", x=-4000000, y=4800000, label="Projection: Azimuthal Equidistant", fill="white") +
+  annotation_scale(location="bl", text_cex=1.2, style="bar") +
+  # annotate("label", x=-4000000, y=4800000, label="Projection: Azimuthal Equidistant", fill="white") +
   geom_rect(data=rect, aes(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax), color="black", fill="white") +
   annotation_custom(grob=inset, xmin=0, xmax=4300000, ymin=-4050000,  ymax=-500000)
+
+##### Plotting with patchwork
+
+p1 <- ggplot(dat) + geom_line(aes(x=julian, y=latitude, color=pop, group=animal_id), size=1) + 
+  theme_classic() +
+  scale_color_manual(values=c("#2166ac", "#b2182b")) + 
+  ylab("Latitude") + xlab("Date") +
+  scale_x_continuous(breaks=c(30,60,90,120,150), labels=c("30-Jan","01-Mar","30-Mar","30-Apr","30-May")) +
+  theme(axis.text=element_text(size=12), 
+        axis.title=element_text(size=12),
+        legend.position="none")
+
+p2 <- ggplot() + geom_path(data = grid_df, aes(x = long, y = lat, group = group), color="gray50") +
+  mp + ppr2 + isl2 + coord_cartesian(xlim=c(-5000000,4000000), ylim=c(-3700000,4500000)) +
+  geom_point(data=dat, aes(x=x, y=y, group=animal_id, color=pop), size=2) +
+  scale_color_manual(values=c("#2166ac", "#b2182b")) +
+  theme_classic() + theme(axis.title.x=element_blank(), axis.text=element_blank(), axis.ticks=element_blank(),
+                          axis.title.y=element_blank(), panel.border=element_rect(color="black", fill=NA, size=0.5),
+                          legend.justification=c(1,1), legend.position=c(1,1), legend.text=element_text(size=12),
+                          legend.title=element_text(size=12),
+                          legend.background=element_rect(fill="white", colour="black")) +
+  guides(fill=guide_legend(title="Population"), color=guide_legend(title="Population")) +
+  annotation_scale(location="bl", text_cex=1.2, style="bar") +
+  geom_rect(data=rect, aes(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax), color="black", fill="white")
+
+
+p2 + inset_element(p1, right=0.98,
+                       bottom=0.01,
+                       left=0.55,
+                       top=0.40)
+
+
+
+
+
+
+
 
 
 ##### A plot showing where interpolated points are

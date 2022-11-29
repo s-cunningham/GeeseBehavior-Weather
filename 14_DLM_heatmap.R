@@ -125,7 +125,7 @@ colors <- c("#2166ac","#4393c3", "#f7f7f7", "#f7f7f7", "#f7f7f7", "#d6604d", "#b
 
 # Facet names
 var_names <- c(prcp="Precipitation (mm)",
-               temp="Minimum Temperature (C)")
+               temp="Temperature (C)")
 
 # Plot
 ggplot(odba, aes(x=julian, y=factor(birdno))) + geom_tile(aes(fill=ptail), colour = "black") + 
