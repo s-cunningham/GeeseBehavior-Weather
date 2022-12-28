@@ -7,6 +7,9 @@ doc/
 files_for_models/
 results/
 
+# SVG files
+.svg
+
 # Non-csv excel files
 .xlsx
 
