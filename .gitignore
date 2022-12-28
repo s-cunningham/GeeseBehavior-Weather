@@ -5,7 +5,6 @@ dlmODBA/
 dlmPTF/
 doc/
 files_for_models/
-results/
 
 # SVG files
 .svg
