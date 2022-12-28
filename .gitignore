@@ -4,6 +4,8 @@ output/
 dlmODBA/
 dlmPTF/
 doc/
+files_for_models/
+results/
 
 # Non-csv excel files
 .xlsx
